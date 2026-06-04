@@ -2,11 +2,20 @@ package web
 
 import (
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/andrew/grafted-secrets/internal/auth"
 	"github.com/andrew/grafted-secrets/internal/vault"
 )
+
+var keyWhitespace = regexp.MustCompile(`\s+`)
+
+// normalizeKey enforces the ABC_DEFG secret-name convention: trim, collapse
+// whitespace runs to underscores, uppercase.
+func normalizeKey(s string) string {
+	return strings.ToUpper(keyWhitespace.ReplaceAllString(strings.TrimSpace(s), "_"))
+}
 
 // valueView drives the reveal/mask value control. Value is set only when revealed.
 type valueView struct {
@@ -19,14 +28,15 @@ type valueView struct {
 func valueCtl(id string) valueView { return valueView{ID: id} }
 
 type secretFormView struct {
-	Action   string
-	Target   string
-	Swap     string
-	FolderID string
-	ID       string
-	Name     string
-	Value    string
-	Notes    string
+	Action      string
+	Target      string
+	Swap        string
+	ParentField string // "folder_id" or "environment_id" (empty when editing)
+	ParentID    string
+	ID          string
+	Name        string
+	Value       string
+	Notes       string
 }
 
 type secretDetailView struct {
@@ -39,27 +49,45 @@ type notesFullView struct {
 	Notes string
 }
 
+// newSecretForm: add a secret inside a folder.
 func (s *Server) newSecretForm(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
 	fid := r.PathValue("id")
 	s.rd.Frag(w, "secretForm", secretFormView{
-		Action: "/secrets", Target: "#secrets-folder-" + fid, Swap: "beforeend", FolderID: fid,
+		Action: "/secrets", Target: "#secrets-folder-" + fid, Swap: "beforeend",
+		ParentField: "folder_id", ParentID: fid,
+	})
+}
+
+// newEnvSecretForm: add an uncategorized secret directly under an environment.
+func (s *Server) newEnvSecretForm(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
+	eid := r.PathValue("id")
+	s.rd.Frag(w, "secretForm", secretFormView{
+		Action: "/secrets", Target: "#secrets-env-" + eid, Swap: "beforeend",
+		ParentField: "environment_id", ParentID: eid,
 	})
 }
 
 func (s *Server) createSecret(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
 	fid := r.FormValue("folder_id")
-	name := strings.TrimSpace(r.FormValue("name"))
+	eid := r.FormValue("environment_id")
+	name := normalizeKey(r.FormValue("name"))
 	if name == "" {
 		s.empty(w)
 		return
 	}
 	notes := r.FormValue("notes")
-	id, err := s.vault.CreateSecret(dek, fid, name, r.FormValue("value"), notes)
+	var id string
+	var err error
+	if eid != "" {
+		id, err = s.vault.CreateEnvSecret(dek, eid, name, r.FormValue("value"), notes)
+	} else {
+		id, err = s.vault.CreateSecret(dek, fid, name, r.FormValue("value"), notes)
+	}
 	if err != nil {
 		s.fail(w, err)
 		return
 	}
-	s.rd.Frag(w, "secretNode", vault.SecretMeta{ID: id, FolderID: fid, Name: name, HasNotes: notes != ""})
+	s.rd.Frag(w, "secretNode", vault.SecretMeta{ID: id, FolderID: fid, EnvironmentID: eid, Name: name, HasNotes: notes != ""})
 }
 
 func (s *Server) editSecretForm(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
@@ -70,24 +98,19 @@ func (s *Server) editSecretForm(w http.ResponseWriter, r *http.Request, sess *au
 	}
 	s.rd.Frag(w, "secretForm", secretFormView{
 		Action: "/secrets/" + full.ID, Target: "#secret-" + full.ID, Swap: "outerHTML",
-		FolderID: full.FolderID, ID: full.ID, Name: full.Name, Value: full.Value, Notes: full.Notes,
+		ID: full.ID, Name: full.Name, Value: full.Value, Notes: full.Notes,
 	})
 }
 
 func (s *Server) updateSecret(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
 	id := r.PathValue("id")
-	fid, err := s.vault.SecretFolder(id)
-	if err != nil {
-		s.fail(w, err)
-		return
-	}
-	name := strings.TrimSpace(r.FormValue("name"))
+	name := normalizeKey(r.FormValue("name"))
 	notes := r.FormValue("notes")
 	if err := s.vault.UpdateSecret(dek, id, name, r.FormValue("value"), notes); err != nil {
 		s.fail(w, err)
 		return
 	}
-	s.rd.Frag(w, "secretNode", vault.SecretMeta{ID: id, FolderID: fid, Name: name, HasNotes: notes != ""})
+	s.rd.Frag(w, "secretNode", vault.SecretMeta{ID: id, Name: name, HasNotes: notes != ""})
 }
 
 func (s *Server) deleteSecret(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {

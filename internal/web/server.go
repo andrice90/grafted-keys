@@ -100,6 +100,8 @@ func (s *Server) routes() {
 
 	// Folders (tree nodes).
 	mux.HandleFunc("GET /environments/{id}/new-folder", s.needDEK(s.newFolderForm))
+	mux.HandleFunc("GET /environments/{id}/new-secret", s.needDEK(s.newEnvSecretForm))
+	mux.HandleFunc("GET /environments/{id}/import", s.needDEK(s.importEnvForm))
 	mux.HandleFunc("POST /folders", s.needDEK(s.createFolder))
 	mux.HandleFunc("GET /folders/{id}/edit", s.needDEK(s.editFolderForm))
 	mux.HandleFunc("POST /folders/{id}", s.needDEK(s.renameFolder))
@@ -107,6 +109,8 @@ func (s *Server) routes() {
 
 	// Secrets (tree leaf nodes).
 	mux.HandleFunc("GET /folders/{id}/new-secret", s.needDEK(s.newSecretForm))
+	mux.HandleFunc("GET /folders/{id}/import", s.needDEK(s.importFolderForm))
+	mux.HandleFunc("POST /import", s.needDEK(s.importEnv))
 	mux.HandleFunc("POST /secrets", s.needDEK(s.createSecret))
 	mux.HandleFunc("GET /secrets/{id}/edit", s.needDEK(s.editSecretForm))
 	mux.HandleFunc("POST /secrets/{id}", s.needDEK(s.updateSecret))

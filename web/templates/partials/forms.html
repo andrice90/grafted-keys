@@ -15,9 +15,9 @@
 {{define "secretForm"}}
 <form class="form secret-form" hx-post="{{.Action}}" hx-target="{{.Target}}" hx-swap="{{.Swap}}">
   <h2>{{if .ID}}Edit secret{{else}}New secret{{end}}</h2>
-  <input type="hidden" name="folder_id" value="{{.FolderID}}">
-  <label>Name
-    <input name="name" value="{{.Name}}" required autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" autofocus>
+  {{if .ParentField}}<input type="hidden" name="{{.ParentField}}" value="{{.ParentID}}">{{end}}
+  <label>Name <span class="hint">UPPER_SNAKE_CASE</span>
+    <input name="name" value="{{.Name}}" required autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" data-keyname autofocus>
   </label>
   <label>Value
     <span class="field-row">
@@ -41,6 +41,21 @@
 {{end}}
 
 {{define "notesPreview"}}{{markdown .Notes}}{{end}}
+
+{{define "importForm"}}
+<form class="form" hx-post="{{.Action}}" hx-target="{{.Target}}" hx-swap="beforeend" hx-encoding="multipart/form-data">
+  <h2>Import .env</h2>
+  <input type="hidden" name="{{.ParentField}}" value="{{.ParentID}}">
+  <p class="hint">{{.Hint}} Keys are normalized to UPPER_SNAKE_CASE; duplicate names are skipped.</p>
+  <label>.env file
+    <input type="file" name="envfile" accept=".env,.txt,text/plain" required>
+  </label>
+  <menu class="form-actions">
+    <button class="btn" type="button" data-close>Cancel</button>
+    <button class="btn primary" type="submit">Import</button>
+  </menu>
+</form>
+{{end}}
 
 {{define "notesFull"}}
 <div class="notes-full">

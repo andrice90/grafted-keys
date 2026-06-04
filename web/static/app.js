@@ -63,6 +63,18 @@
     setTheme(effectiveTheme() === 'dark' ? 'light' : 'dark');
   }
 
+  // --- secret-name input: force UPPER_SNAKE_CASE as you type ---
+  document.addEventListener('input', function (e) {
+    const el = e.target;
+    if (!el.matches || !el.matches('[data-keyname]')) return;
+    const v = el.value.toUpperCase().replace(/\s/g, '_'); // 1:1 so the cursor stays put
+    if (v !== el.value) {
+      const s = el.selectionStart, end = el.selectionEnd;
+      el.value = v;
+      try { el.setSelectionRange(s, end); } catch (_) {}
+    }
+  });
+
   // --- tree expand/collapse ---
   function openNode(node) {
     if (!node) return;

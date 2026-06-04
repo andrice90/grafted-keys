@@ -23,12 +23,15 @@
     <span class="node-name" id="name-env-{{.ID}}">{{.Name}}</span>
     <span class="node-actions">
       <button class="icon-btn" type="button" hx-get="/environments/{{.ID}}/new-folder" hx-target="#dialog" aria-label="Add folder">{{template "icon" "folder-plus"}}</button>
+      <button class="icon-btn" type="button" hx-get="/environments/{{.ID}}/new-secret" hx-target="#dialog" aria-label="Add secret">{{template "icon" "plus"}}</button>
+      <button class="icon-btn" type="button" hx-get="/environments/{{.ID}}/import" hx-target="#dialog" aria-label="Import .env file">{{template "icon" "upload"}}</button>
       <button class="icon-btn" type="button" hx-get="/environments/{{.ID}}/edit" hx-target="#dialog" aria-label="Rename environment">{{template "icon" "pencil"}}</button>
       <button class="icon-btn danger" type="button" hx-delete="/environments/{{.ID}}" hx-target="#env-{{.ID}}" hx-swap="outerHTML"
         hx-confirm="Delete environment “{{.Name}}” and everything inside it?" aria-label="Delete environment">{{template "icon" "trash-2"}}</button>
     </span>
   </div>
   <ul class="node-children" id="folders-env-{{.ID}}" role="group">{{range .Folders}}{{template "folderNode" .}}{{end}}</ul>
+  <ul class="node-children" id="secrets-env-{{.ID}}" role="group">{{range .Secrets}}{{template "secretNode" .}}{{end}}</ul>
 </li>
 {{end}}
 
@@ -40,6 +43,7 @@
     <span class="node-name" id="name-folder-{{.ID}}">{{.Name}}</span>
     <span class="node-actions">
       <button class="icon-btn" type="button" hx-get="/folders/{{.ID}}/new-secret" hx-target="#dialog" aria-label="Add secret">{{template "icon" "plus"}}</button>
+      <button class="icon-btn" type="button" hx-get="/folders/{{.ID}}/import" hx-target="#dialog" aria-label="Import .env file">{{template "icon" "upload"}}</button>
       <button class="icon-btn" type="button" hx-get="/folders/{{.ID}}/edit" hx-target="#dialog" aria-label="Rename folder">{{template "icon" "pencil"}}</button>
       <button class="icon-btn danger" type="button" hx-delete="/folders/{{.ID}}" hx-target="#folder-{{.ID}}" hx-swap="outerHTML"
         hx-confirm="Delete folder “{{.Name}}” and its secrets?" aria-label="Delete folder">{{template "icon" "trash-2"}}</button>
@@ -93,3 +97,5 @@
 {{end}}
 
 {{define "nodeName"}}<span class="node-name" id="name-{{.Type}}-{{.ID}}">{{.Name}}</span>{{end}}
+
+{{define "secretNodes"}}{{range .}}{{template "secretNode" .}}{{end}}{{end}}

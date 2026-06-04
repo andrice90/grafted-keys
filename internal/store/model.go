@@ -29,23 +29,36 @@ type Folder struct {
 }
 
 type Secret struct {
-	ID        string
-	FolderID  string
-	NameEnc   []byte
-	ValueEnc  []byte
-	NotesEnc  []byte
-	Sort      int
-	UpdatedAt int64
+	ID            string
+	FolderID      string // one of FolderID / EnvironmentID is set
+	EnvironmentID string
+	NameEnc       []byte
+	ValueEnc      []byte
+	NotesEnc      []byte
+	Sort          int
+	UpdatedAt     int64
 }
 
 // SecretWithPath carries a secret plus its encrypted ancestor names, for search.
+// FolderID/FolderName are empty for environment-level (uncategorized) secrets.
 type SecretWithPath struct {
-	Secret
+	ID          string
+	NameEnc     []byte
+	NotesEnc    []byte
 	ProjectID   string
 	ProjectName []byte
 	EnvID       string
 	EnvName     []byte
+	FolderID    string
 	FolderName  []byte
+}
+
+// nullStr maps "" to a SQL NULL so the folder/environment XOR constraint holds.
+func nullStr(s string) any {
+	if s == "" {
+		return nil
+	}
+	return s
 }
 
 func now() int64 { return time.Now().Unix() }
@@ -186,14 +199,26 @@ func (db *DB) DeleteFolder(id string) error {
 
 func (db *DB) CreateSecret(s Secret) error {
 	t := now()
-	_, err := db.sql.Exec(`INSERT INTO secrets (id, folder_id, name_enc, value_enc, notes_enc, created_at, updated_at)
-		VALUES (?,?,?,?,?,?,?)`, s.ID, s.FolderID, s.NameEnc, s.ValueEnc, s.NotesEnc, t, t)
+	_, err := db.sql.Exec(`INSERT INTO secrets (id, folder_id, environment_id, name_enc, value_enc, notes_enc, created_at, updated_at)
+		VALUES (?,?,?,?,?,?,?,?)`, s.ID, nullStr(s.FolderID), nullStr(s.EnvironmentID), s.NameEnc, s.ValueEnc, s.NotesEnc, t, t)
 	return err
 }
 
+const secretCols = `id, folder_id, environment_id, name_enc, value_enc, notes_enc, sort, updated_at`
+
+// ListSecrets returns the secrets directly inside a folder.
 func (db *DB) ListSecrets(folderID string) ([]Secret, error) {
-	rows, err := db.sql.Query(`SELECT id, folder_id, name_enc, value_enc, notes_enc, sort, updated_at
-		FROM secrets WHERE folder_id=? ORDER BY sort, created_at`, folderID)
+	rows, err := db.sql.Query(`SELECT `+secretCols+` FROM secrets WHERE folder_id=? ORDER BY sort, created_at`, folderID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanSecrets(rows)
+}
+
+// ListEnvSecrets returns the uncategorized secrets attached directly to an environment.
+func (db *DB) ListEnvSecrets(envID string) ([]Secret, error) {
+	rows, err := db.sql.Query(`SELECT `+secretCols+` FROM secrets WHERE environment_id=? ORDER BY sort, created_at`, envID)
 	if err != nil {
 		return nil, err
 	}
@@ -203,12 +228,13 @@ func (db *DB) ListSecrets(folderID string) ([]Secret, error) {
 
 func (db *DB) GetSecret(id string) (Secret, error) {
 	var s Secret
-	err := db.sql.QueryRow(`SELECT id, folder_id, name_enc, value_enc, notes_enc, sort, updated_at
-		FROM secrets WHERE id=?`, id).
-		Scan(&s.ID, &s.FolderID, &s.NameEnc, &s.ValueEnc, &s.NotesEnc, &s.Sort, &s.UpdatedAt)
+	var fid, eid sql.NullString
+	err := db.sql.QueryRow(`SELECT `+secretCols+` FROM secrets WHERE id=?`, id).
+		Scan(&s.ID, &fid, &eid, &s.NameEnc, &s.ValueEnc, &s.NotesEnc, &s.Sort, &s.UpdatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return s, ErrNotFound
 	}
+	s.FolderID, s.EnvironmentID = fid.String, eid.String
 	return s, err
 }
 
@@ -222,16 +248,17 @@ func (db *DB) DeleteSecret(id string) error {
 }
 
 // AllSecretsWithPath returns every secret joined to its ancestor names, for
-// in-memory search after unlock.
+// in-memory search after unlock. A secret's environment is resolved from its
+// folder (folder secrets) or directly (environment-level secrets).
 func (db *DB) AllSecretsWithPath() ([]SecretWithPath, error) {
 	rows, err := db.sql.Query(`
-		SELECT s.id, s.folder_id, s.name_enc, s.value_enc, s.notes_enc, s.sort, s.updated_at,
-		       p.id, p.name_enc, e.id, e.name_enc, f.name_enc
+		SELECT s.id, s.name_enc, s.notes_enc,
+		       p.id, p.name_enc, e.id, e.name_enc, s.folder_id, f.name_enc
 		FROM secrets s
-		JOIN folders f      ON f.id = s.folder_id
-		JOIN environments e ON e.id = f.environment_id
-		JOIN projects p     ON p.id = e.project_id
-		ORDER BY p.sort, e.sort, f.sort, s.sort`)
+		LEFT JOIN folders f  ON f.id = s.folder_id
+		JOIN environments e  ON e.id = COALESCE(f.environment_id, s.environment_id)
+		JOIN projects p      ON p.id = e.project_id
+		ORDER BY p.sort, e.sort, s.sort`)
 	if err != nil {
 		return nil, err
 	}
@@ -239,10 +266,12 @@ func (db *DB) AllSecretsWithPath() ([]SecretWithPath, error) {
 	var out []SecretWithPath
 	for rows.Next() {
 		var r SecretWithPath
-		if err := rows.Scan(&r.ID, &r.FolderID, &r.NameEnc, &r.ValueEnc, &r.NotesEnc, &r.Sort, &r.UpdatedAt,
-			&r.ProjectID, &r.ProjectName, &r.EnvID, &r.EnvName, &r.FolderName); err != nil {
+		var fid sql.NullString
+		if err := rows.Scan(&r.ID, &r.NameEnc, &r.NotesEnc,
+			&r.ProjectID, &r.ProjectName, &r.EnvID, &r.EnvName, &fid, &r.FolderName); err != nil {
 			return nil, err
 		}
+		r.FolderID = fid.String
 		out = append(out, r)
 	}
 	return out, rows.Err()
@@ -253,8 +282,8 @@ func (db *DB) AllSecretsWithPath() ([]SecretWithPath, error) {
 func (db *DB) ProjectCounts(id string) (envs, secrets int, err error) {
 	err = db.sql.QueryRow(`SELECT
 		(SELECT COUNT(*) FROM environments WHERE project_id=?),
-		(SELECT COUNT(*) FROM secrets s JOIN folders f ON f.id=s.folder_id
-		   JOIN environments e ON e.id=f.environment_id WHERE e.project_id=?)`,
+		(SELECT COUNT(*) FROM secrets s LEFT JOIN folders f ON f.id=s.folder_id
+		   JOIN environments e ON e.id=COALESCE(f.environment_id, s.environment_id) WHERE e.project_id=?)`,
 		id, id).Scan(&envs, &secrets)
 	return
 }
@@ -262,7 +291,8 @@ func (db *DB) ProjectCounts(id string) (envs, secrets int, err error) {
 func (db *DB) EnvCounts(id string) (folders, secrets int, err error) {
 	err = db.sql.QueryRow(`SELECT
 		(SELECT COUNT(*) FROM folders WHERE environment_id=?),
-		(SELECT COUNT(*) FROM secrets s JOIN folders f ON f.id=s.folder_id WHERE f.environment_id=?)`,
+		(SELECT COUNT(*) FROM secrets s LEFT JOIN folders f ON f.id=s.folder_id
+		   WHERE COALESCE(f.environment_id, s.environment_id)=?)`,
 		id, id).Scan(&folders, &secrets)
 	return
 }
@@ -278,9 +308,11 @@ func scanSecrets(rows *sql.Rows) ([]Secret, error) {
 	var out []Secret
 	for rows.Next() {
 		var s Secret
-		if err := rows.Scan(&s.ID, &s.FolderID, &s.NameEnc, &s.ValueEnc, &s.NotesEnc, &s.Sort, &s.UpdatedAt); err != nil {
+		var fid, eid sql.NullString
+		if err := rows.Scan(&s.ID, &fid, &eid, &s.NameEnc, &s.ValueEnc, &s.NotesEnc, &s.Sort, &s.UpdatedAt); err != nil {
 			return nil, err
 		}
+		s.FolderID, s.EnvironmentID = fid.String, eid.String
 		out = append(out, s)
 	}
 	return out, rows.Err()

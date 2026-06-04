@@ -28,11 +28,12 @@ type Folder struct {
 }
 
 type SecretMeta struct {
-	ID        string
-	FolderID  string
-	Name      string
-	HasNotes  bool
-	UpdatedAt int64
+	ID            string
+	FolderID      string
+	EnvironmentID string
+	Name          string
+	HasNotes      bool
+	UpdatedAt     int64
 }
 
 type SecretFull struct {
@@ -58,6 +59,7 @@ type TreeFolder struct {
 type TreeEnv struct {
 	Environment
 	Folders []TreeFolder
+	Secrets []SecretMeta // uncategorized secrets attached directly to the environment
 }
 
 type SearchHit struct {
@@ -301,26 +303,34 @@ func (s *Service) GetSecretFull(dek []byte, id string) (SecretFull, error) {
 
 func (s *Service) CreateSecret(dek []byte, folderID, name, value, notes string) (string, error) {
 	id := crypto.RandID()
-	rec, err := s.sealSecret(dek, id, folderID, name, value, notes)
+	rec, err := s.sealSecret(dek, id, name, value, notes)
 	if err != nil {
 		return "", err
 	}
+	rec.FolderID = folderID
+	return id, s.db.CreateSecret(rec)
+}
+
+// CreateEnvSecret creates an uncategorized secret directly under an environment.
+func (s *Service) CreateEnvSecret(dek []byte, envID, name, value, notes string) (string, error) {
+	id := crypto.RandID()
+	rec, err := s.sealSecret(dek, id, name, value, notes)
+	if err != nil {
+		return "", err
+	}
+	rec.EnvironmentID = envID
 	return id, s.db.CreateSecret(rec)
 }
 
 func (s *Service) UpdateSecret(dek []byte, id, name, value, notes string) error {
-	r, err := s.db.GetSecret(id)
-	if err != nil {
-		return err
-	}
-	rec, err := s.sealSecret(dek, id, r.FolderID, name, value, notes)
+	rec, err := s.sealSecret(dek, id, name, value, notes)
 	if err != nil {
 		return err
 	}
 	return s.db.UpdateSecret(rec)
 }
 
-func (s *Service) sealSecret(dek []byte, id, folderID, name, value, notes string) (store.Secret, error) {
+func (s *Service) sealSecret(dek []byte, id, name, value, notes string) (store.Secret, error) {
 	ne, err := s.seal(dek, name, "secret", id, "name")
 	if err != nil {
 		return store.Secret{}, err
@@ -333,7 +343,7 @@ func (s *Service) sealSecret(dek []byte, id, folderID, name, value, notes string
 	if err != nil {
 		return store.Secret{}, err
 	}
-	return store.Secret{ID: id, FolderID: folderID, NameEnc: ne, ValueEnc: ve, NotesEnc: no}, nil
+	return store.Secret{ID: id, NameEnc: ne, ValueEnc: ve, NotesEnc: no}, nil
 }
 
 func (s *Service) DeleteSecret(id string) error { return s.db.DeleteSecret(id) }
@@ -370,7 +380,31 @@ func (s *Service) Tree(dek []byte, projectID string) ([]TreeEnv, error) {
 			}
 			tfs = append(tfs, TreeFolder{Folder: f, Secrets: secs})
 		}
-		out = append(out, TreeEnv{Environment: e, Folders: tfs})
+		loose, err := s.EnvSecrets(dek, e.ID)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, TreeEnv{Environment: e, Folders: tfs, Secrets: loose})
+	}
+	return out, nil
+}
+
+// EnvSecrets returns the uncategorized secrets attached directly to an environment.
+func (s *Service) EnvSecrets(dek []byte, envID string) ([]SecretMeta, error) {
+	rows, err := s.db.ListEnvSecrets(envID)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]SecretMeta, 0, len(rows))
+	for _, r := range rows {
+		name, err := s.field(dek, r.NameEnc, "secret", r.ID, "name")
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, SecretMeta{
+			ID: r.ID, EnvironmentID: r.EnvironmentID, Name: name,
+			HasNotes: len(r.NotesEnc) > emptyCipherLen, UpdatedAt: r.UpdatedAt,
+		})
 	}
 	return out, nil
 }
@@ -423,9 +457,12 @@ func (s *Service) Search(dek []byte, query string) ([]SearchHit, error) {
 		if err != nil {
 			return nil, err
 		}
-		folder, err := s.field(dek, r.FolderName, "folder", r.FolderID, "name")
-		if err != nil {
-			return nil, err
+		folder := "" // environment-level secrets have no folder
+		if len(r.FolderName) > 0 {
+			folder, err = s.field(dek, r.FolderName, "folder", r.FolderID, "name")
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		if contains(name, q) || contains(notes, q) || contains(folder, q) ||

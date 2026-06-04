@@ -98,6 +98,27 @@ var migrations = []string{
 	CREATE INDEX idx_env_project  ON environments(project_id);
 	CREATE INDEX idx_folder_env   ON folders(environment_id);
 	CREATE INDEX idx_secret_folder ON secrets(folder_id);`,
+
+	// Allow a secret to attach to a folder OR directly to an environment
+	// (uncategorized). SQLite can't relax NOT NULL in place, so rebuild the table.
+	`CREATE TABLE secrets_new (
+		id             TEXT PRIMARY KEY,
+		folder_id      TEXT REFERENCES folders(id) ON DELETE CASCADE,
+		environment_id TEXT REFERENCES environments(id) ON DELETE CASCADE,
+		name_enc       BLOB NOT NULL,
+		value_enc      BLOB NOT NULL,
+		notes_enc      BLOB NOT NULL,
+		sort           INTEGER NOT NULL DEFAULT 0,
+		created_at     INTEGER NOT NULL,
+		updated_at     INTEGER NOT NULL,
+		CHECK ((folder_id IS NOT NULL) <> (environment_id IS NOT NULL))
+	);
+	INSERT INTO secrets_new (id, folder_id, environment_id, name_enc, value_enc, notes_enc, sort, created_at, updated_at)
+		SELECT id, folder_id, NULL, name_enc, value_enc, notes_enc, sort, created_at, updated_at FROM secrets;
+	DROP TABLE secrets;
+	ALTER TABLE secrets_new RENAME TO secrets;
+	CREATE INDEX idx_secret_folder ON secrets(folder_id);
+	CREATE INDEX idx_secret_env    ON secrets(environment_id);`,
 }
 
 func (db *DB) migrate() error {
