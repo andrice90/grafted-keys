@@ -52,7 +52,9 @@
 
 /* ---------- base ---------- */
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+/* manipulation = keep scroll + pinch-zoom but drop the ~300ms double-tap delay */
+html { -webkit-text-size-adjust: 100%; touch-action: manipulation; }
+a, button, .node-row, .twisty, .icon-btn, .btn, .seg-btn, .card-main, .search-hit { touch-action: manipulation; }
 body {
   margin: 0; font-family: var(--font); background: var(--bg); color: var(--text);
   line-height: 1.5; font-size: 16px;
@@ -183,7 +185,7 @@ a { color: var(--accent-text); text-decoration: none; }
 .node-children { margin-left: 1.2rem; border-left: 1px solid var(--border); }
 .node-row {
   display: flex; align-items: center; gap: .35rem; min-height: 40px;
-  padding: .12rem .4rem; border-radius: var(--radius-sm);
+  padding: .12rem .4rem; border-radius: var(--radius-sm); cursor: pointer;
 }
 .node-row:hover { background: var(--surface-2); }
 .twisty {

@@ -82,12 +82,20 @@
     const tw = node.querySelector(':scope > .node-row > [data-twisty]');
     if (tw) tw.setAttribute('aria-expanded', 'true');
   }
+  // Tapping anywhere on a node row toggles it (the chevron is a tiny target on a
+  // phone). Action buttons and links are excluded.
   document.addEventListener('click', function (e) {
-    const tw = e.target.closest('[data-twisty]');
-    if (!tw) return; // htmx (if any) still handles its own lazy-load on this click
-    const node = tw.closest('.node');
-    const open = node.classList.toggle('open');
-    tw.setAttribute('aria-expanded', String(open));
+    if (e.target.closest('.node-actions') || e.target.closest('a')) return;
+    const row = e.target.closest('.node-row');
+    if (!row) return;
+    const tw = row.querySelector('[data-twisty]');
+    if (!tw) return;
+    if (e.target.closest('[data-twisty]')) {
+      const node = tw.closest('.node');
+      tw.setAttribute('aria-expanded', String(node.classList.toggle('open')));
+    } else {
+      tw.click(); // delegate so the chevron's lazy-load (secrets) still fires
+    }
   });
 
   // --- search dropdown ---
