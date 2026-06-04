@@ -12,6 +12,7 @@ type Base struct {
 	CSRF        string
 	Theme       string // "light", "dark", or "" (follow system)
 	Chrome      bool   // render the app header/bottom-bar (false on auth pages)
+	Asset       string // cache-busting version token for css/js
 	TOTPEnabled bool
 }
 
@@ -23,12 +24,12 @@ func theme(r *http.Request) string {
 }
 
 func (s *Server) base(r *http.Request, sess *auth.Session) Base {
-	return Base{CSRF: sess.CSRF, Theme: theme(r), Chrome: true}
+	return Base{CSRF: sess.CSRF, Theme: theme(r), Chrome: true, Asset: s.assetVer}
 }
 
 // authBase is the chrome-less base for setup/unlock pages.
 func (s *Server) authBase(r *http.Request, sess *auth.Session) Base {
-	return Base{CSRF: sess.CSRF, Theme: theme(r), Chrome: false}
+	return Base{CSRF: sess.CSRF, Theme: theme(r), Chrome: false, Asset: s.assetVer}
 }
 
 // projCard is the home grid card, with cascade counts for delete confirmations.

@@ -3,6 +3,8 @@ package web
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"io/fs"
 	"log"
 	"net/http"
@@ -22,9 +24,22 @@ type Server struct {
 	rd       *Renderer
 	static   http.Handler
 	mux      http.Handler
+	assetVer string // content hash of css+js, for cache-busting
 
 	// snapshot triggers a manual backup (wired from the backup scheduler).
 	snapshot func() (string, error)
+}
+
+// assetVersion is a short content hash of the cacheable assets, appended to
+// their URLs so a rebuild with changed CSS/JS busts the browser cache.
+func assetVersion(assets fs.FS) string {
+	h := sha256.New()
+	for _, p := range []string{"static/app.css", "static/app.js"} {
+		if b, err := fs.ReadFile(assets, p); err == nil {
+			h.Write(b)
+		}
+	}
+	return hex.EncodeToString(h.Sum(nil))[:10]
 }
 
 func NewServer(cfg config.Config, v *vault.Service, sessions *auth.Sessions, limiter *auth.Limiter,
@@ -40,6 +55,7 @@ func NewServer(cfg config.Config, v *vault.Service, sessions *auth.Sessions, lim
 	s := &Server{
 		cfg: cfg, vault: v, sessions: sessions, limiter: limiter,
 		rd: rd, static: http.FileServerFS(staticFS), snapshot: snapshot,
+		assetVer: assetVersion(assets),
 	}
 	s.routes()
 	return s, nil
