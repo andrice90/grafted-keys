@@ -9,7 +9,7 @@
     <label for="confirm">Confirm passphrase</label>
     <input id="confirm" name="confirm" type="password" autocomplete="new-password" minlength="8" required>
     {{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
-    <button class="primary block" type="submit">Create vault</button>
+    <button class="btn primary block" type="submit">Create vault</button>
   </form>
 </div>
 {{end}}
