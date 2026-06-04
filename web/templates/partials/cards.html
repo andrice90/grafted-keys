@@ -70,7 +70,12 @@
 {{define "secretDetail"}}
 <div class="secret-detail-inner">
   {{template "secretValue" (valueCtl .ID)}}
-  {{if .Notes}}<div class="markdown note-body">{{markdown .Notes}}</div>{{end}}
+  {{if .Notes}}
+  <div class="note-card">
+    <button class="icon-btn note-expand" type="button" hx-get="/secrets/{{.ID}}/notes" hx-target="#dialog" aria-label="Expand notes to full screen">{{template "icon" "maximize-2"}}</button>
+    <div class="markdown note-clamp">{{markdown .Notes}}</div>
+  </div>
+  {{end}}
 </div>
 {{end}}
 

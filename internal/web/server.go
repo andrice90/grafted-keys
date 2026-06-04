@@ -96,6 +96,7 @@ func (s *Server) routes() {
 	mux.HandleFunc("POST /secrets/{id}", s.needDEK(s.updateSecret))
 	mux.HandleFunc("DELETE /secrets/{id}", s.needDEK(s.deleteSecret))
 	mux.HandleFunc("GET /secrets/{id}/detail", s.needDEK(s.secretDetail))
+	mux.HandleFunc("GET /secrets/{id}/notes", s.needDEK(s.secretNotes))
 	mux.HandleFunc("GET /secrets/{id}/reveal", s.needDEK(s.revealSecret))
 	mux.HandleFunc("GET /secrets/{id}/mask", s.needDEK(s.maskSecret))
 	mux.HandleFunc("GET /secrets/{id}/copy", s.needDEK(s.copySecret))

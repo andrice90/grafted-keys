@@ -42,6 +42,16 @@
 
 {{define "notesPreview"}}{{markdown .Notes}}{{end}}
 
+{{define "notesFull"}}
+<div class="notes-full">
+  <div class="notes-full-head">
+    <h2>{{.Name}}</h2>
+    <button class="icon-btn" type="button" data-close aria-label="Close">{{template "icon" "x"}}</button>
+  </div>
+  <div class="markdown">{{markdown .Notes}}</div>
+</div>
+{{end}}
+
 {{define "totpEnroll"}}
 <div class="totp-enroll">
   <p>Add the secret to your authenticator app (scan the URI or type the key), then enter a code to confirm.</p>

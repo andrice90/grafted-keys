@@ -86,7 +86,7 @@ a { color: var(--accent-text); text-decoration: none; }
 .btn.primary { background: var(--accent); color: var(--on-accent); border-color: transparent; }
 .btn.primary:hover { filter: brightness(1.06); border-color: transparent; }
 .btn.danger { color: var(--danger); }
-.btn.block { width: 100%; }
+.btn.block { width: 100%; height: 46px; font-size: 1rem; }
 
 .icon-btn {
   display: inline-flex; align-items: center; justify-content: center;
@@ -193,15 +193,28 @@ a { color: var(--accent-text); text-decoration: none; }
 .node.open > .node-children:empty::after {
   content: "Empty"; display: block; color: var(--muted); font-size: .82rem; padding: .25rem .5rem .25rem 1.5rem;
 }
-.node-detail { padding: .1rem .5rem .6rem 2rem; }
+/* detail spans the full width of the secret row, out to the right edge */
+.node-detail { padding: .15rem .5rem .7rem 1.9rem; }
 .secret-detail-inner { display: flex; flex-direction: column; gap: .5rem; }
 
 /* ---------- secret value control ---------- */
 .secret-value { display: flex; align-items: center; gap: .25rem; background: var(--surface-2);
-  border-radius: var(--radius-sm); padding: .25rem .4rem; max-width: 540px; }
+  border-radius: var(--radius-sm); padding: .35rem .5rem; }
 .secret-value .value { font-family: var(--mono); font-size: .85rem; overflow-x: auto; flex: 1; white-space: nowrap; }
 .secret-value .value.masked { letter-spacing: .12em; color: var(--muted); }
-.node-detail .note-body { max-width: 620px; }
+
+/* ---------- notes card (matches the value box) ---------- */
+.note-card { position: relative; background: var(--surface-2); border-radius: var(--radius-sm); padding: .55rem .8rem; }
+.note-clamp { max-height: 32em; overflow: hidden; }
+.note-expand { position: absolute; top: .35rem; right: .35rem; background: var(--surface-2); color: var(--muted); }
+.note-expand:hover { background: var(--surface); color: var(--text); }
+
+/* fullscreen notes window */
+.dialog:has(.notes-full) { width: min(96vw, 900px); }
+.notes-full { padding: 1rem 1.2rem; max-height: 85vh; overflow: auto; }
+.notes-full-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  position: sticky; top: 0; background: var(--surface); padding-bottom: .4rem; margin-bottom: .3rem; border-bottom: 1px solid var(--border); }
+.notes-full-head h2 { margin: 0; }
 
 /* ---------- dialogs + forms ---------- */
 .dialog, dialog {

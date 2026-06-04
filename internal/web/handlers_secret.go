@@ -34,6 +34,11 @@ type secretDetailView struct {
 	Notes string
 }
 
+type notesFullView struct {
+	Name  string
+	Notes string
+}
+
 func (s *Server) newSecretForm(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
 	fid := r.PathValue("id")
 	s.rd.Frag(w, "secretForm", secretFormView{
@@ -101,6 +106,16 @@ func (s *Server) secretDetail(w http.ResponseWriter, r *http.Request, sess *auth
 		return
 	}
 	s.rd.Frag(w, "secretDetail", secretDetailView{ID: full.ID, Notes: full.Notes})
+}
+
+// secretNotes returns the full rendered notes for the fullscreen dialog.
+func (s *Server) secretNotes(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
+	full, err := s.vault.GetSecretFull(dek, r.PathValue("id"))
+	if err != nil {
+		s.fail(w, err)
+		return
+	}
+	s.rd.Frag(w, "notesFull", notesFullView{Name: full.Name, Notes: full.Notes})
 }
 
 // revealSecret returns the decrypted value (reveal-on-demand). Plaintext is never
