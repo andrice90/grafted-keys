@@ -4,7 +4,7 @@
   <button class="btn primary" type="button" data-open="#dlg-new-project">{{template "icon" "plus"}} Project</button>
 </div>
 <ul class="grid cards" id="grid">{{range .Projects}}{{template "projectCard" .}}{{end}}</ul>
-<p class="empty grid-empty">No projects yet. Create your first one to start storing secrets.</p>
+<p class="empty grid-empty">No projects yet. Create your first one to start storing keys.</p>
 <dialog id="dlg-new-project" class="dialog">
   <form class="form" hx-post="/projects" hx-target="#main">
     <h2>New project</h2>

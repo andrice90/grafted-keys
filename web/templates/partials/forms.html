@@ -14,9 +14,9 @@
 
 {{define "secretForm"}}
 <form class="form secret-form" hx-post="{{.Action}}" hx-target="{{.Target}}" hx-swap="{{.Swap}}">
-  <h2>{{if .ID}}Edit secret{{else}}New secret{{end}}</h2>
+  <h2>{{if .ID}}Edit key{{else}}New key{{end}}</h2>
   {{if .ParentField}}<input type="hidden" name="{{.ParentField}}" value="{{.ParentID}}">{{end}}
-  <label>Name <span class="hint">UPPER_SNAKE_CASE</span>
+  <label>Name
     <input name="name" value="{{.Name}}" required autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" data-keyname autofocus>
   </label>
   <label>Value
@@ -26,13 +26,17 @@
       <button class="icon-btn" type="button" data-toggle-input aria-label="Show value" aria-pressed="false">{{template "icon" "eye"}}</button>
     </span>
   </label>
-  <label>Notes <span class="hint">Markdown supported</span>
-    <textarea name="notes" rows="5" autocapitalize="off" spellcheck="false" data-notes>{{.Notes}}</textarea>
-  </label>
-  <div class="notes-tools">
-    <button class="btn" type="button" hx-post="/notes/preview" hx-include="[data-notes]" hx-target="#notes-preview">Preview</button>
+  <div class="notes-field">
+    <div class="notes-head">
+      <span class="field-label">Notes</span>
+      <div class="seg">
+        <button class="seg-btn active" type="button" data-notes-mode="edit">Edit</button>
+        <button class="seg-btn" type="button" data-notes-mode="preview" hx-post="/notes/preview" hx-include="[data-notes]" hx-target="#notes-preview">Preview</button>
+      </div>
+    </div>
+    <textarea name="notes" rows="6" autocapitalize="off" spellcheck="false" data-notes>{{.Notes}}</textarea>
+    <div id="notes-preview" class="notes-preview markdown" hidden></div>
   </div>
-  <div id="notes-preview" class="notes-preview markdown"></div>
   <menu class="form-actions">
     <button class="btn" type="button" data-close>Cancel</button>
     <button class="btn primary" type="submit">Save</button>

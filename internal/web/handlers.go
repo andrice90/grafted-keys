@@ -100,7 +100,7 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request, sess *auth.Sessi
 		s.fail(w, err)
 		return
 	}
-	s.rd.Page(w, r, "search", searchView{Base: s.base(r, sess), Query: q, Hits: hits})
+	s.rd.Frag(w, "searchResults", searchView{Query: q, Hits: hits})
 }
 
 func (s *Server) fail(w http.ResponseWriter, err error) {

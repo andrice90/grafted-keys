@@ -90,12 +90,42 @@
     tw.setAttribute('aria-expanded', String(open));
   });
 
+  // --- search dropdown ---
+  let pendingFocus = null;
+  function clearSearch() { const r = $('#search-results'); if (r) r.innerHTML = ''; }
+  document.addEventListener('click', function (e) {
+    const hit = e.target.closest('[data-focus]');
+    if (hit) { pendingFocus = hit.getAttribute('data-focus'); clearSearch(); return; }
+    if (!e.target.closest('.search')) clearSearch();
+  });
+  function focusSecret(id) {
+    const node = document.getElementById('secret-' + id);
+    if (!node) return;
+    let p = node.parentElement ? node.parentElement.closest('.node') : null;
+    while (p) { openNode(p); p = p.parentElement ? p.parentElement.closest('.node') : null; }
+    node.scrollIntoView({ block: 'center' });
+    node.classList.add('flash');
+    setTimeout(function () { node.classList.remove('flash'); }, 1600);
+  }
+
   // --- click delegation ---
   document.addEventListener('click', function (e) {
-    const t = e.target.closest('[data-open],[data-close],[data-copy],[data-toggle-input],[data-theme-toggle],[data-focus-search]');
+    const t = e.target.closest('[data-open],[data-close],[data-copy],[data-toggle-input],[data-theme-toggle],[data-focus-search],[data-notes-mode]');
     if (!t) return;
 
     if (t.hasAttribute('data-theme-toggle')) { toggleTheme(); return; }
+
+    if (t.dataset.notesMode) {
+      const form = t.closest('form');
+      const ta = form && form.querySelector('[data-notes]');
+      const pv = form && form.querySelector('.notes-preview');
+      const seg = t.closest('.seg');
+      if (seg) seg.querySelectorAll('[data-notes-mode]').forEach((b) => b.classList.toggle('active', b === t));
+      const preview = t.dataset.notesMode === 'preview';
+      if (ta) ta.hidden = preview;
+      if (pv) pv.hidden = !preview;
+      return;
+    }
 
     if (t.hasAttribute('data-focus-search')) {
       const s = $('[data-search]'); if (s) s.focus();
@@ -164,8 +194,9 @@
       openNode(target.closest('.node'));
     }
 
-    // Main view changed: move focus to the heading for a11y.
+    // Main view changed: jump to a searched key, else move focus to the heading.
     if (target.id === 'main') {
+      if (pendingFocus) { focusSecret(pendingFocus); pendingFocus = null; return; }
       const h = target.querySelector('h1');
       if (h) { h.setAttribute('tabindex', '-1'); h.focus(); }
     }

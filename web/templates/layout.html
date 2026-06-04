@@ -6,7 +6,8 @@
 <meta name="color-scheme" content="light dark">
 <meta name="htmx-config" content='{"includeIndicatorStyles":false,"defaultSwapStyle":"innerHTML"}'>
 <meta name="csrf-token" content="{{.CSRF}}">
-<title>Grafted Secrets</title>
+<title>Grafted Keys</title>
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg?v={{.Asset}}">
 <link rel="stylesheet" href="/static/app.css?v={{.Asset}}">
 </head>
 <body>
@@ -18,9 +19,10 @@
   </a>
   <div class="search" role="search">
     <span class="search-ico">{{template "icon" "search"}}</span>
-    <input type="search" name="q" placeholder="Search secrets or folders…" aria-label="Search secrets"
-      hx-get="/search" hx-target="#main" hx-push-url="true"
-      hx-trigger="input changed delay:200ms, search" autocomplete="off" data-search>
+    <input type="search" name="q" placeholder="Search keys or folders…" aria-label="Search keys"
+      hx-get="/search" hx-target="#search-results" hx-swap="innerHTML"
+      hx-trigger="input changed delay:250ms, search" autocomplete="off" data-search>
+    <div id="search-results" class="search-results"></div>
   </div>
   <nav class="actions" aria-label="Primary">
     <button class="icon-btn" type="button" data-theme-toggle aria-label="Toggle color theme">{{template "icon" "sun-moon"}}</button>
@@ -38,6 +40,7 @@
 <nav class="bottombar" aria-label="Quick actions">
   <a href="/" hx-get="/" hx-target="#main" hx-push-url="true" aria-label="Home">{{template "icon" "house"}}</a>
   <button type="button" data-focus-search aria-label="Search">{{template "icon" "search"}}</button>
+  <button type="button" data-theme-toggle aria-label="Toggle color theme">{{template "icon" "sun-moon"}}</button>
   <a href="/settings" hx-get="/settings" hx-target="#main" hx-push-url="true" aria-label="Settings">{{template "icon" "settings"}}</a>
   <button type="button" hx-post="/lock" aria-label="Lock vault">{{template "icon" "lock"}}</button>
 </nav>

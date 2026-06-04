@@ -31,7 +31,7 @@
 
 <section class="card setting">
   <h2>Rotate data key</h2>
-  <p>Generates a fresh encryption key and re-encrypts every secret under it. Confirm with your passphrase.</p>
+  <p>Generates a fresh encryption key and re-encrypts every key under it. Confirm with your passphrase.</p>
   <form class="form" hx-post="/settings/rekey" hx-target="#main">
     <label>Passphrase <input name="passphrase" type="password" autocomplete="current-password" required></label>
     <menu class="form-actions"><button class="btn" type="submit">Rotate key</button></menu>
