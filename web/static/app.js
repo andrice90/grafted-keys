@@ -99,21 +99,30 @@
   });
 
   // --- search dropdown ---
-  let pendingFocus = null;
   function clearSearch() { const r = $('#search-results'); if (r) r.innerHTML = ''; }
   document.addEventListener('click', function (e) {
-    const hit = e.target.closest('[data-focus]');
-    if (hit) { pendingFocus = hit.getAttribute('data-focus'); clearSearch(); return; }
+    if (e.target.closest('.search-hit')) { clearSearch(); return; } // let htmx navigate
     if (!e.target.closest('.search')) clearSearch();
   });
+  function unflash() {
+    document.querySelectorAll('.node.flash').forEach(function (n) { n.classList.remove('flash'); });
+  }
   function focusSecret(id) {
     const node = document.getElementById('secret-' + id);
     if (!node) return;
     let p = node.parentElement ? node.parentElement.closest('.node') : null;
     while (p) { openNode(p); p = p.parentElement ? p.parentElement.closest('.node') : null; }
     node.scrollIntoView({ block: 'center' });
-    node.classList.add('flash');
-    setTimeout(function () { node.classList.remove('flash'); }, 1600);
+    unflash();
+    node.classList.add('flash'); // stays until the next interaction (see pointerdown)
+  }
+  // The target key travels in the URL (?key=...) so focus survives any nav path.
+  function focusFromURL() {
+    const key = new URLSearchParams(location.search).get('key');
+    if (!key) return false;
+    focusSecret(key);
+    try { history.replaceState(history.state, '', location.pathname); } catch (_) {}
+    return true;
   }
 
   // --- click delegation ---
@@ -164,7 +173,7 @@
   // Track where a press started so a drag that ends on the backdrop (e.g. a text
   // selection dragged out of a field) does not dismiss the dialog.
   let downTarget = null;
-  document.addEventListener('pointerdown', function (e) { downTarget = e.target; }, true);
+  document.addEventListener('pointerdown', function (e) { downTarget = e.target; unflash(); }, true);
 
   // close a dialog only when both press and release land on its backdrop
   document.addEventListener('click', function (e) {
@@ -205,11 +214,16 @@
 
     // Main view changed: jump to a searched key, else move focus to the heading.
     if (target.id === 'main') {
-      if (pendingFocus) { focusSecret(pendingFocus); pendingFocus = null; return; }
+      clearSearch();
+      if (focusFromURL()) return;
       const h = target.querySelector('h1');
       if (h) { h.setAttribute('tabindex', '-1'); h.focus(); }
     }
   });
+
+  // Initial full-page load straight to /projects/{id}?key={id} (e.g. a bookmarked
+  // or non-htmx search result).
+  focusFromURL();
 
   document.addEventListener('htmx:responseError', function () {
     announce('Something went wrong. Please try again.');

@@ -111,7 +111,7 @@
 <ul class="search-list">
   {{range .Hits}}
   <li>
-    <a class="search-hit" href="/projects/{{.ProjectID}}" hx-get="/projects/{{.ProjectID}}" hx-target="#main" hx-push-url="true" data-focus="{{.SecretID}}">
+    <a class="search-hit" href="/projects/{{.ProjectID}}?key={{.SecretID}}" hx-get="/projects/{{.ProjectID}}?key={{.SecretID}}" hx-target="#main" hx-push-url="true">
       <span class="hit-name">{{highlight .Name $.Query}}</span>
       <span class="hit-path">{{.ProjectName}} <span class="sep">/</span> {{.EnvName}}{{if .FolderName}} <span class="sep">/</span> {{.FolderName}}{{end}}</span>
     </a>

@@ -211,7 +211,8 @@ a { color: var(--accent-text); text-decoration: none; }
 .node.open > .node-children:not(.node-loose):empty::after {
   content: "Empty"; display: block; color: var(--muted); font-size: .82rem; padding: .25rem .5rem .25rem 1.5rem;
 }
-.node.flash > .node-row { background: color-mix(in srgb, var(--accent) 22%, var(--surface)); }
+/* highlight the key name in place (no row box / padding); stays until interaction */
+.node.flash > .node-row > .node-name { background: var(--mark); border-radius: 3px; box-shadow: 0 0 0 2px var(--mark); }
 /* detail spans the full width of the secret row, out to the right edge */
 .node-detail { padding: .15rem .5rem .7rem 1.9rem; }
 .secret-detail-inner { display: flex; flex-direction: column; gap: .6rem; }
