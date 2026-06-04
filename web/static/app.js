@@ -53,9 +53,14 @@
     document.cookie = 'gs_theme=' + v + '; path=/; max-age=31536000; samesite=lax';
     announce(v ? v + ' theme' : 'system theme');
   }
-  function cycleTheme() {
-    const cur = document.documentElement.dataset.theme || '';
-    setTheme(cur === '' ? 'light' : cur === 'light' ? 'dark' : '');
+  function effectiveTheme() {
+    const t = document.documentElement.dataset.theme;
+    if (t === 'light' || t === 'dark') return t;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  // Two-state toggle so every tap visibly flips (no invisible "system" step).
+  function toggleTheme() {
+    setTheme(effectiveTheme() === 'dark' ? 'light' : 'dark');
   }
 
   // --- tree expand/collapse ---
@@ -78,7 +83,7 @@
     const t = e.target.closest('[data-open],[data-close],[data-copy],[data-toggle-input],[data-theme-toggle],[data-focus-search]');
     if (!t) return;
 
-    if (t.hasAttribute('data-theme-toggle')) { cycleTheme(); return; }
+    if (t.hasAttribute('data-theme-toggle')) { toggleTheme(); return; }
 
     if (t.hasAttribute('data-focus-search')) {
       const s = $('[data-search]'); if (s) s.focus();

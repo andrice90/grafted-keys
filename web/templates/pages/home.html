@@ -1,7 +1,6 @@
 {{define "content"}}
-<nav class="crumbs" aria-label="Breadcrumb"><span class="crumb current">Projects</span></nav>
 <div class="page-head">
-  <h1>Projects</h1>
+  <nav class="crumbs" aria-label="Breadcrumb"><span class="crumb current">Projects</span></nav>
   <button class="btn primary" type="button" data-open="#dlg-new-project">{{template "icon" "plus"}} Project</button>
 </div>
 <ul class="grid cards" id="grid">{{range .Projects}}{{template "projectCard" .}}{{end}}</ul>
