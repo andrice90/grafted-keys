@@ -1,0 +1,17 @@
+# Runtime data — never commit secrets or backups
+/data/
+/backups/
+*.db
+*.db-wal
+*.db-shm
+
+# Build artifacts
+/grafted
+/dist/
+*.test
+*.out
+
+# Local env / tooling
+.env
+.env.*
+.DS_Store

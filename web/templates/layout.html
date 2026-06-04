@@ -1,0 +1,50 @@
+{{define "layout"}}<!doctype html>
+<html lang="en" data-theme="{{.Theme}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="color-scheme" content="light dark">
+<meta name="htmx-config" content='{"includeIndicatorStyles":false,"defaultSwapStyle":"innerHTML"}'>
+<meta name="csrf-token" content="{{.CSRF}}">
+<title>Grafted Secrets</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+{{if .Chrome}}
+<header class="topbar">
+  <a class="brand" href="/" hx-get="/" hx-target="#main" hx-push-url="true">
+    <span class="logo" aria-hidden="true">⬡</span><span class="brand-name">Grafted</span>
+  </a>
+  <div class="search" role="search">
+    <input type="search" name="q" placeholder="Search secrets or folders…" aria-label="Search secrets"
+      hx-get="/search" hx-target="#main" hx-push-url="true"
+      hx-trigger="input changed delay:200ms, search" autocomplete="off" data-search>
+  </div>
+  <nav class="actions" aria-label="Primary">
+    <button class="icon-btn" type="button" data-theme-toggle aria-label="Toggle color theme">◐</button>
+    <a class="icon-btn" href="/settings" hx-get="/settings" hx-target="#main" hx-push-url="true" aria-label="Settings">⚙</a>
+    <button class="icon-btn" type="button" hx-post="/lock" aria-label="Lock vault">⏻</button>
+  </nav>
+</header>
+{{end}}
+
+<main id="main" class="container{{if not .Chrome}} narrow{{end}}">
+{{template "content" .}}
+</main>
+
+{{if .Chrome}}
+<nav class="bottombar" aria-label="Quick actions">
+  <a href="/" hx-get="/" hx-target="#main" hx-push-url="true" aria-label="Home">⌂</a>
+  <button type="button" data-focus-search aria-label="Search">⌕</button>
+  <a href="/settings" hx-get="/settings" hx-target="#main" hx-push-url="true" aria-label="Settings">⚙</a>
+  <button type="button" hx-post="/lock" aria-label="Lock vault">⏻</button>
+</nav>
+{{end}}
+
+<dialog id="dialog" class="dialog"></dialog>
+<div id="sr-status" class="sr-only" role="status" aria-live="polite"></div>
+
+<script src="/static/vendor/htmx.min.js" defer></script>
+<script src="/static/app.js" defer></script>
+</body>
+</html>{{end}}

@@ -1,0 +1,19 @@
+{{define "content"}}
+<nav class="crumbs" aria-label="Breadcrumb"><span class="crumb current">Projects</span></nav>
+<div class="grid-head">
+  <h1>Projects</h1>
+  <button class="btn primary" type="button" data-open="#dlg-new-project">+ Project</button>
+</div>
+{{if .Projects}}
+<ul class="grid cards" id="grid">{{range .Projects}}{{template "projectCard" .}}{{end}}</ul>
+{{else}}
+<p class="empty">No projects yet. Create your first one to start storing secrets.</p>
+{{end}}
+<dialog id="dlg-new-project" class="dialog">
+  <form class="form" hx-post="/projects" hx-target="#main">
+    <h2>New project</h2>
+    <label>Name <input name="name" required autocomplete="off" autofocus></label>
+    <menu class="form-actions"><button type="button" data-close>Cancel</button><button class="primary" type="submit">Create</button></menu>
+  </form>
+</dialog>
+{{end}}

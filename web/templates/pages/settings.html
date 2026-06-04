@@ -1,0 +1,46 @@
+{{define "content"}}
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="/" hx-get="/" hx-target="#main" hx-push-url="true">Projects</a>
+  <span class="sep">/</span><span class="crumb current">Settings</span>
+</nav>
+<h1>Settings</h1>
+{{if .Message}}<p class="flash ok" role="status">{{.Message}}</p>{{end}}
+{{if .Error}}<p class="flash error" role="alert">{{.Error}}</p>{{end}}
+
+<section class="card setting">
+  <h2>Two-factor authentication</h2>
+  {{if .TOTPEnabled}}
+  <p>2FA is <strong>enabled</strong> for unlock.</p>
+  <form hx-post="/settings/totp/disable" hx-target="#main"><button class="danger" type="submit">Disable 2FA</button></form>
+  {{else}}
+  <p>Require a time-based one-time code as a second factor at unlock. Note: the master passphrase alone still decrypts data at rest — 2FA is an online gate.</p>
+  <button class="btn primary" type="button" hx-post="/settings/totp/begin" hx-target="#totp-area">Enable 2FA</button>
+  <div id="totp-area"></div>
+  {{end}}
+</section>
+
+<section class="card setting">
+  <h2>Change passphrase</h2>
+  <form class="form" hx-post="/settings/passphrase" hx-target="#main">
+    <label>Current passphrase <input name="current" type="password" autocomplete="current-password" required></label>
+    <label>New passphrase <input name="new" type="password" autocomplete="new-password" minlength="8" required></label>
+    <label>Confirm new <input name="confirm" type="password" autocomplete="new-password" minlength="8" required></label>
+    <menu class="form-actions"><button class="primary" type="submit">Update passphrase</button></menu>
+  </form>
+</section>
+
+<section class="card setting">
+  <h2>Rotate data key</h2>
+  <p>Generates a fresh encryption key and re-encrypts every secret under it. Confirm with your passphrase.</p>
+  <form class="form" hx-post="/settings/rekey" hx-target="#main">
+    <label>Passphrase <input name="passphrase" type="password" autocomplete="current-password" required></label>
+    <menu class="form-actions"><button type="submit">Rotate key</button></menu>
+  </form>
+</section>
+
+<section class="card setting">
+  <h2>Backup</h2>
+  <p>Write an encrypted snapshot now. Scheduled backups also run automatically and are pruned by retention.</p>
+  <form hx-post="/settings/backup" hx-target="#main"><button type="submit">Back up now</button></form>
+</section>
+{{end}}

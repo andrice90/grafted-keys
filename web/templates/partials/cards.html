@@ -1,0 +1,75 @@
+{{define "projectCard"}}
+<li class="card" id="project-{{.ID}}">
+  <a class="card-main" href="/projects/{{.ID}}" hx-get="/projects/{{.ID}}" hx-target="#main" hx-push-url="true">
+    <h3 class="card-title">{{.Name}}</h3>
+    <div class="pills">
+      <span class="pill">{{.Envs}} env{{if ne .Envs 1}}s{{end}}</span>
+      <span class="pill">{{.Secrets}} secret{{if ne .Secrets 1}}s{{end}}</span>
+    </div>
+  </a>
+  <div class="card-tools">
+    <button class="icon-btn" type="button" hx-get="/projects/{{.ID}}/edit" hx-target="#dialog" aria-label="Rename {{.Name}}">✎</button>
+    <button class="icon-btn danger" type="button" hx-delete="/projects/{{.ID}}" hx-target="#project-{{.ID}}" hx-swap="outerHTML"
+      hx-confirm="Delete project “{{.Name}}” and its {{.Envs}} environments / {{.Secrets}} secrets? This cannot be undone." aria-label="Delete {{.Name}}">🗑</button>
+  </div>
+</li>
+{{end}}
+
+{{define "environmentCard"}}
+<li class="card" id="environment-{{.ID}}">
+  <a class="card-main" href="/environments/{{.ID}}" hx-get="/environments/{{.ID}}" hx-target="#main" hx-push-url="true">
+    <h3 class="card-title">{{.Name}}</h3>
+    <div class="pills">
+      <span class="pill">{{.Folders}} folder{{if ne .Folders 1}}s{{end}}</span>
+      <span class="pill">{{.Secrets}} secret{{if ne .Secrets 1}}s{{end}}</span>
+    </div>
+  </a>
+  <div class="card-tools">
+    <button class="icon-btn" type="button" hx-get="/environments/{{.ID}}/edit" hx-target="#dialog" aria-label="Rename {{.Name}}">✎</button>
+    <button class="icon-btn danger" type="button" hx-delete="/environments/{{.ID}}" hx-target="#environment-{{.ID}}" hx-swap="outerHTML"
+      hx-confirm="Delete environment “{{.Name}}” and its {{.Folders}} folders / {{.Secrets}} secrets?" aria-label="Delete {{.Name}}">🗑</button>
+  </div>
+</li>
+{{end}}
+
+{{define "folderCard"}}
+<li class="card" id="folder-{{.ID}}">
+  <a class="card-main" href="/folders/{{.ID}}" hx-get="/folders/{{.ID}}" hx-target="#main" hx-push-url="true">
+    <h3 class="card-title">{{.Name}}</h3>
+    <div class="pills"><span class="pill">{{.Secrets}} secret{{if ne .Secrets 1}}s{{end}}</span></div>
+  </a>
+  <div class="card-tools">
+    <button class="icon-btn" type="button" hx-get="/folders/{{.ID}}/edit" hx-target="#dialog" aria-label="Rename {{.Name}}">✎</button>
+    <button class="icon-btn danger" type="button" hx-delete="/folders/{{.ID}}" hx-target="#folder-{{.ID}}" hx-swap="outerHTML"
+      hx-confirm="Delete folder “{{.Name}}” and its {{.Secrets}} secrets?" aria-label="Delete {{.Name}}">🗑</button>
+  </div>
+</li>
+{{end}}
+
+{{define "secretCard"}}
+<li class="card secret" id="secret-{{.ID}}">
+  <div class="secret-row">
+    <h3 class="card-title">{{.Name}}</h3>
+    <div class="card-tools">
+      {{if .HasNotes}}<button class="icon-btn" type="button" hx-get="/secrets/{{.ID}}/notes" hx-target="#dialog" aria-label="Notes for {{.Name}}">≣</button>{{end}}
+      <button class="icon-btn" type="button" hx-get="/secrets/{{.ID}}/edit" hx-target="#dialog" aria-label="Edit {{.Name}}">✎</button>
+      <button class="icon-btn danger" type="button" hx-delete="/secrets/{{.ID}}" hx-target="#secret-{{.ID}}" hx-swap="outerHTML"
+        hx-confirm="Delete secret “{{.Name}}”? This cannot be undone." aria-label="Delete {{.Name}}">🗑</button>
+    </div>
+  </div>
+  {{template "secretValue" (valueCtl .ID)}}
+</li>
+{{end}}
+
+{{define "secretValue"}}
+<div class="secret-value" id="val-{{.ID}}">
+  {{if .Revealed}}
+  <code class="value revealed">{{.Value}}</code>
+  <button class="icon-btn" type="button" hx-get="/secrets/{{.ID}}/mask" hx-target="#val-{{.ID}}" hx-swap="outerHTML" aria-pressed="true" aria-label="Hide value">🙈</button>
+  {{else}}
+  <code class="value masked" aria-label="hidden value">••••••••••</code>
+  <button class="icon-btn" type="button" hx-get="/secrets/{{.ID}}/reveal" hx-target="#val-{{.ID}}" hx-swap="outerHTML" aria-pressed="false" aria-label="Reveal value">👁</button>
+  {{end}}
+  <button class="icon-btn copy" type="button" data-copy="/secrets/{{.ID}}/copy" aria-label="Copy value">⧉</button>
+</div>
+{{end}}

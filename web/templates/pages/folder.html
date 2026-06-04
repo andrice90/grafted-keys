@@ -1,0 +1,17 @@
+{{define "content"}}
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="/" hx-get="/" hx-target="#main" hx-push-url="true">Projects</a><span class="sep">/</span>
+  <a href="/projects/{{.Crumb.Project.ID}}" hx-get="/projects/{{.Crumb.Project.ID}}" hx-target="#main" hx-push-url="true">{{.Crumb.Project.Name}}</a><span class="sep">/</span>
+  <a href="/environments/{{.Crumb.Environment.ID}}" hx-get="/environments/{{.Crumb.Environment.ID}}" hx-target="#main" hx-push-url="true">{{.Crumb.Environment.Name}}</a><span class="sep">/</span>
+  <span class="crumb current">{{.Crumb.Folder.Name}}</span>
+</nav>
+<div class="grid-head">
+  <h1>{{.Crumb.Folder.Name}}</h1>
+  <button class="btn primary" type="button" hx-get="/folders/{{.Crumb.Folder.ID}}/new-secret" hx-target="#dialog">+ Secret</button>
+</div>
+{{if .Secrets}}
+<ul class="grid cards secrets" id="grid">{{range .Secrets}}{{template "secretCard" .}}{{end}}</ul>
+{{else}}
+<p class="empty">No secrets here yet. Add one with name, value and notes.</p>
+{{end}}
+{{end}}

@@ -1,0 +1,14 @@
+# Keep the build context tiny
+.git
+.gitignore
+data
+backups
+dist
+grafted
+*.db
+*.db-wal
+*.db-shm
+docs
+*.md
+.env
+.env.*

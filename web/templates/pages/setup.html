@@ -1,0 +1,15 @@
+{{define "content"}}
+<div class="auth-card card">
+  <h1 class="auth-title"><span class="logo" aria-hidden="true">⬡</span> Grafted Secrets</h1>
+  <p class="auth-sub">Create your master passphrase. It encrypts everything and <strong>cannot be recovered</strong> if lost.</p>
+  <form class="form" method="post" action="/setup">
+    <input type="hidden" name="_csrf" value="{{.CSRF}}">
+    <label for="pass">Master passphrase</label>
+    <input id="pass" name="passphrase" type="password" autocomplete="new-password" minlength="8" required autofocus>
+    <label for="confirm">Confirm passphrase</label>
+    <input id="confirm" name="confirm" type="password" autocomplete="new-password" minlength="8" required>
+    {{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
+    <button class="primary block" type="submit">Create vault</button>
+  </form>
+</div>
+{{end}}

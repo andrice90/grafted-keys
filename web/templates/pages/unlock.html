@@ -1,0 +1,24 @@
+{{define "content"}}
+<div class="auth-card card">
+  <h1 class="auth-title"><span class="logo" aria-hidden="true">⬡</span> Grafted Secrets</h1>
+  {{if eq .Stage "totp"}}
+  <p class="auth-sub">Enter your two-factor authentication code.</p>
+  <form class="form" method="post" action="/unlock/totp">
+    <input type="hidden" name="_csrf" value="{{.CSRF}}">
+    <label class="sr-only" for="code">Authentication code</label>
+    <input id="code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="6" required autofocus>
+    {{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
+    <button class="primary block" type="submit">Unlock</button>
+  </form>
+  {{else}}
+  <p class="auth-sub">Enter your master passphrase to unlock the vault.</p>
+  <form class="form" method="post" action="/unlock">
+    <input type="hidden" name="_csrf" value="{{.CSRF}}">
+    <label class="sr-only" for="pass">Master passphrase</label>
+    <input id="pass" name="passphrase" type="password" autocomplete="current-password" required autofocus>
+    {{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
+    <button class="primary block" type="submit">Unlock</button>
+  </form>
+  {{end}}
+</div>
+{{end}}
