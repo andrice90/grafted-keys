@@ -185,9 +185,10 @@
       return;
     }
 
-    // Any other swap is a navigation or a mutation result → close the dialog.
+    // A navigation/mutation result lands OUTSIDE the dialog → close it. A swap
+    // into the dialog (e.g. the notes preview) must leave it open.
     const dlg = document.getElementById('dialog');
-    if (dlg && dlg.open) dlg.close();
+    if (dlg && dlg.open && !dlg.contains(target)) dlg.close();
 
     // A node was appended into a (possibly collapsed) branch: reveal it.
     if (target.classList && target.classList.contains('node-children')) {
