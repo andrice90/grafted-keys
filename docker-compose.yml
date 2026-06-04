@@ -5,13 +5,13 @@ services:
     container_name: grafted-secrets
     restart: unless-stopped
     ports:
-      - "8080:8080"            # put a TLS-terminating reverse proxy in front
+      - "8133:8080"            # host 8133  ->  container 8080 (where the app listens)
     environment:
-      GRAFTED_ADDR: ":8080"
+      GRAFTED_ADDR: ":8080"        # internal listen port — leave at 8080; change only the host side above
       GRAFTED_BACKUP_AT: "03:00"   # daily snapshot time (HH:MM, 24h)
       GRAFTED_BACKUP_KEEP: "14"    # retain newest N encrypted backups
       GRAFTED_SESSION_IDLE: "30m"  # auto-lock after inactivity
-      GRAFTED_SECURE_COOKIE: "1"   # set 0 ONLY for plain-HTTP LAN without TLS
+      GRAFTED_SECURE_COOKIE: "0"   # plain-HTTP LAN: MUST be 0 or the browser rejects the cookie; set 1 only behind HTTPS
       GRAFTED_TRUST_PROXY: "0"     # set 1 when behind a trusted reverse proxy
     volumes:
       - data:/data

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/andrew/grafted-secrets/internal/auth"
+	"github.com/andrew/grafted-secrets/internal/vault"
 )
 
 // valueView drives the reveal/mask value control. Value is set only when revealed.
@@ -18,33 +19,42 @@ type valueView struct {
 func valueCtl(id string) valueView { return valueView{ID: id} }
 
 type secretFormView struct {
-	Method   string // "post" | "put"
 	Action   string
+	Target   string
+	Swap     string
 	FolderID string
+	ID       string
 	Name     string
 	Value    string
 	Notes    string
 }
 
-type notesView struct {
-	Name  string
+type secretDetailView struct {
+	ID    string
 	Notes string
 }
 
 func (s *Server) newSecretForm(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
-	s.rd.Frag(w, "secretForm", secretFormView{Method: "post", Action: "/secrets", FolderID: r.PathValue("id")})
+	fid := r.PathValue("id")
+	s.rd.Frag(w, "secretForm", secretFormView{
+		Action: "/secrets", Target: "#secrets-folder-" + fid, Swap: "beforeend", FolderID: fid,
+	})
 }
 
 func (s *Server) createSecret(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
 	fid := r.FormValue("folder_id")
 	name := strings.TrimSpace(r.FormValue("name"))
-	if name != "" {
-		if _, err := s.vault.CreateSecret(dek, fid, name, r.FormValue("value"), r.FormValue("notes")); err != nil {
-			s.fail(w, err)
-			return
-		}
+	if name == "" {
+		s.empty(w)
+		return
 	}
-	s.renderFolder(w, r, sess, dek, fid)
+	notes := r.FormValue("notes")
+	id, err := s.vault.CreateSecret(dek, fid, name, r.FormValue("value"), notes)
+	if err != nil {
+		s.fail(w, err)
+		return
+	}
+	s.rd.Frag(w, "secretNode", vault.SecretMeta{ID: id, FolderID: fid, Name: name, HasNotes: notes != ""})
 }
 
 func (s *Server) editSecretForm(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
@@ -54,8 +64,8 @@ func (s *Server) editSecretForm(w http.ResponseWriter, r *http.Request, sess *au
 		return
 	}
 	s.rd.Frag(w, "secretForm", secretFormView{
-		Method: "put", Action: "/secrets/" + full.ID, FolderID: full.FolderID,
-		Name: full.Name, Value: full.Value, Notes: full.Notes,
+		Action: "/secrets/" + full.ID, Target: "#secret-" + full.ID, Swap: "outerHTML",
+		FolderID: full.FolderID, ID: full.ID, Name: full.Name, Value: full.Value, Notes: full.Notes,
 	})
 }
 
@@ -67,11 +77,12 @@ func (s *Server) updateSecret(w http.ResponseWriter, r *http.Request, sess *auth
 		return
 	}
 	name := strings.TrimSpace(r.FormValue("name"))
-	if err := s.vault.UpdateSecret(dek, id, name, r.FormValue("value"), r.FormValue("notes")); err != nil {
+	notes := r.FormValue("notes")
+	if err := s.vault.UpdateSecret(dek, id, name, r.FormValue("value"), notes); err != nil {
 		s.fail(w, err)
 		return
 	}
-	s.renderFolder(w, r, sess, dek, fid)
+	s.rd.Frag(w, "secretNode", vault.SecretMeta{ID: id, FolderID: fid, Name: name, HasNotes: notes != ""})
 }
 
 func (s *Server) deleteSecret(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
@@ -82,8 +93,18 @@ func (s *Server) deleteSecret(w http.ResponseWriter, r *http.Request, sess *auth
 	s.empty(w)
 }
 
+// secretDetail is the lazy-loaded expanded panel: masked value control + notes.
+func (s *Server) secretDetail(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
+	full, err := s.vault.GetSecretFull(dek, r.PathValue("id"))
+	if err != nil {
+		s.fail(w, err)
+		return
+	}
+	s.rd.Frag(w, "secretDetail", secretDetailView{ID: full.ID, Notes: full.Notes})
+}
+
 // revealSecret returns the decrypted value (reveal-on-demand). Plaintext is never
-// present in list/search responses — only here, behind an explicit user action.
+// present in list/tree responses — only here, behind an explicit user action.
 func (s *Server) revealSecret(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
 	id := r.PathValue("id")
 	val, err := s.vault.SecretValue(dek, id)
@@ -109,15 +130,6 @@ func (s *Server) copySecret(w http.ResponseWriter, r *http.Request, sess *auth.S
 	w.Write([]byte(val))
 }
 
-func (s *Server) secretNotes(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
-	full, err := s.vault.GetSecretFull(dek, r.PathValue("id"))
-	if err != nil {
-		s.fail(w, err)
-		return
-	}
-	s.rd.Frag(w, "notesDialog", notesView{Name: full.Name, Notes: full.Notes})
-}
-
 func (s *Server) previewNotes(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
-	s.rd.Frag(w, "notesPreview", notesView{Notes: r.FormValue("notes")})
+	s.rd.Frag(w, "notesPreview", secretDetailView{Notes: r.FormValue("notes")})
 }

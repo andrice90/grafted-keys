@@ -1,20 +1,20 @@
 {{define "nameForm"}}
-<form class="form" hx-post="{{.Action}}" hx-target="#main">
+<form class="form" hx-post="{{.Action}}" hx-target="{{.Target}}" hx-swap="{{.Swap}}">
   <h2>{{.Title}}</h2>
   {{if .ParentField}}<input type="hidden" name="{{.ParentField}}" value="{{.ParentID}}">{{end}}
   <label>Name
     <input name="name" value="{{.Name}}" required autocomplete="off" autocapitalize="off" autofocus>
   </label>
   <menu class="form-actions">
-    <button type="button" data-close>Cancel</button>
-    <button class="primary" type="submit">Save</button>
+    <button class="btn" type="button" data-close>Cancel</button>
+    <button class="btn primary" type="submit">Save</button>
   </menu>
 </form>
 {{end}}
 
 {{define "secretForm"}}
-<form class="form secret-form" hx-post="{{.Action}}" hx-target="#main">
-  <h2>{{if .Name}}Edit secret{{else}}New secret{{end}}</h2>
+<form class="form secret-form" hx-post="{{.Action}}" hx-target="{{.Target}}" hx-swap="{{.Swap}}">
+  <h2>{{if .ID}}Edit secret{{else}}New secret{{end}}</h2>
   <input type="hidden" name="folder_id" value="{{.FolderID}}">
   <label>Name
     <input name="name" value="{{.Name}}" required autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" autofocus>
@@ -23,28 +23,20 @@
     <span class="field-row">
       <input class="value-input" name="value" value="{{.Value}}" type="password"
         autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-secret-input>
-      <button class="icon-btn" type="button" data-toggle-input aria-label="Show value" aria-pressed="false">👁</button>
+      <button class="icon-btn" type="button" data-toggle-input aria-label="Show value" aria-pressed="false">{{template "icon" "eye"}}</button>
     </span>
   </label>
   <label>Notes <span class="hint">Markdown supported</span>
     <textarea name="notes" rows="5" autocapitalize="off" spellcheck="false" data-notes>{{.Notes}}</textarea>
   </label>
   <div class="notes-tools">
-    <button type="button" hx-post="/notes/preview" hx-include="[data-notes]" hx-target="#notes-preview">Preview</button>
+    <button class="btn" type="button" hx-post="/notes/preview" hx-include="[data-notes]" hx-target="#notes-preview">Preview</button>
   </div>
   <div id="notes-preview" class="notes-preview markdown"></div>
   <menu class="form-actions">
-    <button type="button" data-close>Cancel</button>
-    <button class="primary" type="submit">Save</button>
+    <button class="btn" type="button" data-close>Cancel</button>
+    <button class="btn primary" type="submit">Save</button>
   </menu>
-</form>
-{{end}}
-
-{{define "notesDialog"}}
-<form method="dialog" class="notes-view">
-  <h2>{{.Name}}</h2>
-  <div class="markdown">{{markdown .Notes}}</div>
-  <menu class="form-actions"><button class="primary" type="submit">Close</button></menu>
 </form>
 {{end}}
 
@@ -56,11 +48,10 @@
   <div class="kv"><span>Key</span><code class="totp-secret">{{.Secret}}</code></div>
   <div class="kv"><span>URI</span><code class="totp-uri">{{.URI}}</code></div>
   <form class="form" hx-post="/settings/totp/confirm" hx-target="#main">
-    <input type="hidden" name="secret" value="{{.Secret}}">
     <label>6-digit code
       <input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="6" required>
     </label>
-    <menu class="form-actions"><button class="primary" type="submit">Enable 2FA</button></menu>
+    <menu class="form-actions"><button class="btn primary" type="submit">Enable 2FA</button></menu>
   </form>
 </div>
 {{end}}

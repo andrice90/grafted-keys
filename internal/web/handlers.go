@@ -31,19 +31,10 @@ func (s *Server) authBase(r *http.Request, sess *auth.Session) Base {
 	return Base{CSRF: sess.CSRF, Theme: theme(r), Chrome: false}
 }
 
-// card view-models carry cascade counts so delete confirmations can name them.
+// projCard is the home grid card, with cascade counts for delete confirmations.
 type projCard struct {
 	ID, Name string
 	Envs     int
-	Secrets  int
-}
-type envCard struct {
-	ID, Name string
-	Folders  int
-	Secrets  int
-}
-type folderCard struct {
-	ID, Name string
 	Secrets  int
 }
 
@@ -51,21 +42,10 @@ type homeView struct {
 	Base
 	Projects []projCard
 }
-type projectView struct {
+type projectTreeView struct {
 	Base
-	Project      vault.Project
-	Environments []envCard
-}
-type environmentView struct {
-	Base
-	Project     vault.Project
-	Environment vault.Environment
-	Folders     []folderCard
-}
-type folderView struct {
-	Base
-	Crumb   vault.Crumb
-	Secrets []vault.SecretMeta
+	Project vault.Project
+	Envs    []vault.TreeEnv
 }
 type searchView struct {
 	Base
@@ -73,7 +53,7 @@ type searchView struct {
 	Hits  []vault.SearchHit
 }
 
-// ---- level renderers (shared by GET views and post-mutation responses) ----
+// ---- renderers ----
 
 func (s *Server) renderHome(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
 	projects, err := s.vault.Projects(dek)
@@ -95,57 +75,12 @@ func (s *Server) renderProject(w http.ResponseWriter, r *http.Request, sess *aut
 		s.fail(w, err)
 		return
 	}
-	envs, err := s.vault.Environments(dek, id)
+	envs, err := s.vault.Tree(dek, id)
 	if err != nil {
 		s.fail(w, err)
 		return
 	}
-	cards := make([]envCard, 0, len(envs))
-	for _, e := range envs {
-		folders, secrets, _ := s.vault.CountsForEnv(e.ID)
-		cards = append(cards, envCard{ID: e.ID, Name: e.Name, Folders: folders, Secrets: secrets})
-	}
-	s.rd.Page(w, r, "project", projectView{Base: s.base(r, sess), Project: project, Environments: cards})
-}
-
-func (s *Server) renderEnvironment(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte, id string) {
-	env, err := s.vault.GetEnvironment(dek, id)
-	if err != nil {
-		s.fail(w, err)
-		return
-	}
-	project, err := s.vault.GetProject(dek, env.ProjectID)
-	if err != nil {
-		s.fail(w, err)
-		return
-	}
-	folders, err := s.vault.Folders(dek, id)
-	if err != nil {
-		s.fail(w, err)
-		return
-	}
-	cards := make([]folderCard, 0, len(folders))
-	for _, f := range folders {
-		secrets, _ := s.vault.CountsForFolder(f.ID)
-		cards = append(cards, folderCard{ID: f.ID, Name: f.Name, Secrets: secrets})
-	}
-	s.rd.Page(w, r, "environment", environmentView{
-		Base: s.base(r, sess), Project: project, Environment: env, Folders: cards,
-	})
-}
-
-func (s *Server) renderFolder(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte, id string) {
-	crumb, err := s.vault.Breadcrumb(dek, id)
-	if err != nil {
-		s.fail(w, err)
-		return
-	}
-	secrets, err := s.vault.Secrets(dek, id)
-	if err != nil {
-		s.fail(w, err)
-		return
-	}
-	s.rd.Page(w, r, "folder", folderView{Base: s.base(r, sess), Crumb: crumb, Secrets: secrets})
+	s.rd.Page(w, r, "project", projectTreeView{Base: s.base(r, sess), Project: project, Envs: envs})
 }
 
 // ---- navigation handlers ----
@@ -155,12 +90,6 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request, sess *auth.Session
 }
 func (s *Server) viewProject(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
 	s.renderProject(w, r, sess, dek, r.PathValue("id"))
-}
-func (s *Server) viewEnvironment(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
-	s.renderEnvironment(w, r, sess, dek, r.PathValue("id"))
-}
-func (s *Server) viewFolder(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
-	s.renderFolder(w, r, sess, dek, r.PathValue("id"))
 }
 
 func (s *Server) search(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {

@@ -64,37 +64,41 @@ func (s *Server) routes() {
 	mux.HandleFunc("POST /unlock/totp", s.postUnlockTOTP)
 	mux.HandleFunc("POST /lock", s.postLock)
 
-	// Navigation (gated).
+	// Navigation (gated). Home = project card grid; a project = the file-tree.
 	mux.HandleFunc("GET /{$}", s.needDEK(s.home))
 	mux.HandleFunc("GET /projects/{id}", s.needDEK(s.viewProject))
-	mux.HandleFunc("GET /environments/{id}", s.needDEK(s.viewEnvironment))
-	mux.HandleFunc("GET /folders/{id}", s.needDEK(s.viewFolder))
 	mux.HandleFunc("GET /search", s.needDEK(s.search))
 
-	// Projects / environments / folders (gated mutations).
+	// Projects (home grid).
 	mux.HandleFunc("POST /projects", s.needDEK(s.createProject))
 	mux.HandleFunc("GET /projects/{id}/edit", s.needDEK(s.editProjectForm))
 	mux.HandleFunc("POST /projects/{id}", s.needDEK(s.renameProject))
 	mux.HandleFunc("DELETE /projects/{id}", s.needDEK(s.deleteProject))
+
+	// Environments (tree nodes).
+	mux.HandleFunc("GET /projects/{id}/new-env", s.needDEK(s.newEnvForm))
 	mux.HandleFunc("POST /environments", s.needDEK(s.createEnvironment))
 	mux.HandleFunc("GET /environments/{id}/edit", s.needDEK(s.editEnvironmentForm))
 	mux.HandleFunc("POST /environments/{id}", s.needDEK(s.renameEnvironment))
 	mux.HandleFunc("DELETE /environments/{id}", s.needDEK(s.deleteEnvironment))
+
+	// Folders (tree nodes).
+	mux.HandleFunc("GET /environments/{id}/new-folder", s.needDEK(s.newFolderForm))
 	mux.HandleFunc("POST /folders", s.needDEK(s.createFolder))
 	mux.HandleFunc("GET /folders/{id}/edit", s.needDEK(s.editFolderForm))
 	mux.HandleFunc("POST /folders/{id}", s.needDEK(s.renameFolder))
 	mux.HandleFunc("DELETE /folders/{id}", s.needDEK(s.deleteFolder))
 
-	// Secrets (gated).
+	// Secrets (tree leaf nodes).
 	mux.HandleFunc("GET /folders/{id}/new-secret", s.needDEK(s.newSecretForm))
 	mux.HandleFunc("POST /secrets", s.needDEK(s.createSecret))
 	mux.HandleFunc("GET /secrets/{id}/edit", s.needDEK(s.editSecretForm))
 	mux.HandleFunc("POST /secrets/{id}", s.needDEK(s.updateSecret))
 	mux.HandleFunc("DELETE /secrets/{id}", s.needDEK(s.deleteSecret))
+	mux.HandleFunc("GET /secrets/{id}/detail", s.needDEK(s.secretDetail))
 	mux.HandleFunc("GET /secrets/{id}/reveal", s.needDEK(s.revealSecret))
 	mux.HandleFunc("GET /secrets/{id}/mask", s.needDEK(s.maskSecret))
 	mux.HandleFunc("GET /secrets/{id}/copy", s.needDEK(s.copySecret))
-	mux.HandleFunc("GET /secrets/{id}/notes", s.needDEK(s.secretNotes))
 	mux.HandleFunc("POST /notes/preview", s.needDEK(s.previewNotes))
 
 	// Settings (gated).
@@ -172,7 +176,11 @@ func (s *Server) csrfMW(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		if origin := r.Header.Get("Origin"); origin != "" {
+		// Reject only a real cross-origin request. A missing or opaque ("null")
+		// Origin — which Safari sends on same-origin form POSTs reached via a
+		// redirect — is treated as no signal; the synchronizer token below plus
+		// the SameSite=Lax cookie are the actual CSRF protection.
+		if origin := r.Header.Get("Origin"); origin != "" && origin != "null" {
 			if u, err := url.Parse(origin); err != nil || u.Host != r.Host {
 				http.Error(w, "bad origin", http.StatusForbidden)
 				return

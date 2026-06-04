@@ -58,6 +58,21 @@
     setTheme(cur === '' ? 'light' : cur === 'light' ? 'dark' : '');
   }
 
+  // --- tree expand/collapse ---
+  function openNode(node) {
+    if (!node) return;
+    node.classList.add('open');
+    const tw = node.querySelector(':scope > .node-row > [data-twisty]');
+    if (tw) tw.setAttribute('aria-expanded', 'true');
+  }
+  document.addEventListener('click', function (e) {
+    const tw = e.target.closest('[data-twisty]');
+    if (!tw) return; // htmx (if any) still handles its own lazy-load on this click
+    const node = tw.closest('.node');
+    const open = node.classList.toggle('open');
+    tw.setAttribute('aria-expanded', String(open));
+  });
+
   // --- click delegation ---
   document.addEventListener('click', function (e) {
     const t = e.target.closest('[data-open],[data-close],[data-copy],[data-toggle-input],[data-theme-toggle],[data-focus-search]');
@@ -115,7 +130,7 @@
     const target = e.detail.target;
     if (!target) return;
 
-    // A form/notes fragment was loaded into the shared dialog: open it.
+    // A form/detail fragment was loaded into the shared dialog: open it.
     if (target.id === 'dialog') {
       if (target.children.length && target.showModal && !target.open) target.showModal();
       const f = target.querySelector('input,textarea,button');
@@ -123,9 +138,17 @@
       return;
     }
 
-    // Main view changed: close any open modal and move focus for a11y.
+    // Any other swap is a navigation or a mutation result → close the dialog.
+    const dlg = document.getElementById('dialog');
+    if (dlg && dlg.open) dlg.close();
+
+    // A node was appended into a (possibly collapsed) branch: reveal it.
+    if (target.classList && target.classList.contains('node-children')) {
+      openNode(target.closest('.node'));
+    }
+
+    // Main view changed: move focus to the heading for a11y.
     if (target.id === 'main') {
-      document.querySelectorAll('dialog[open]').forEach((d) => d.close());
       const h = target.querySelector('h1');
       if (h) { h.setAttribute('tabindex', '-1'); h.focus(); }
     }

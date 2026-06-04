@@ -3,21 +3,10 @@
   <a href="/" hx-get="/" hx-target="#main" hx-push-url="true">Projects</a>
   <span class="sep">/</span><span class="crumb current">{{.Project.Name}}</span>
 </nav>
-<div class="grid-head">
+<div class="page-head">
   <h1>{{.Project.Name}}</h1>
-  <button class="btn primary" type="button" data-open="#dlg-new-env">+ Environment</button>
+  <button class="btn primary" type="button" hx-get="/projects/{{.Project.ID}}/new-env" hx-target="#dialog">{{template "icon" "plus"}} Environment</button>
 </div>
-{{if .Environments}}
-<ul class="grid cards" id="grid">{{range .Environments}}{{template "environmentCard" .}}{{end}}</ul>
-{{else}}
-<p class="empty">No environments yet — e.g. development, staging, production.</p>
-{{end}}
-<dialog id="dlg-new-env" class="dialog">
-  <form class="form" hx-post="/environments" hx-target="#main">
-    <h2>New environment</h2>
-    <input type="hidden" name="project_id" value="{{.Project.ID}}">
-    <label>Name <input name="name" required autocomplete="off" autofocus></label>
-    <menu class="form-actions"><button type="button" data-close>Cancel</button><button class="primary" type="submit">Create</button></menu>
-  </form>
-</dialog>
+<ul class="tree" id="tree">{{range .Envs}}{{template "envNode" .}}{{end}}</ul>
+<p class="empty tree-empty">No environments yet — add one (e.g. development, staging, production) to start.</p>
 {{end}}

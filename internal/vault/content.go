@@ -50,6 +50,16 @@ type Crumb struct {
 	Folder      Folder
 }
 
+// Tree types: the fully-decrypted project subtree for the expandable file-tree UI.
+type TreeFolder struct {
+	Folder
+	Secrets []SecretMeta
+}
+type TreeEnv struct {
+	Environment
+	Folders []TreeFolder
+}
+
 type SearchHit struct {
 	SecretID    string
 	Name        string
@@ -338,6 +348,32 @@ func (s *Service) SecretFolder(id string) (string, error) {
 }
 
 // ---- navigation & search ----
+
+// Tree returns the full decrypted environment→folder→secret subtree for a
+// project (secret values are NOT decrypted — names/metadata only).
+func (s *Service) Tree(dek []byte, projectID string) ([]TreeEnv, error) {
+	envs, err := s.Environments(dek, projectID)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]TreeEnv, 0, len(envs))
+	for _, e := range envs {
+		folders, err := s.Folders(dek, e.ID)
+		if err != nil {
+			return nil, err
+		}
+		tfs := make([]TreeFolder, 0, len(folders))
+		for _, f := range folders {
+			secs, err := s.Secrets(dek, f.ID)
+			if err != nil {
+				return nil, err
+			}
+			tfs = append(tfs, TreeFolder{Folder: f, Secrets: secs})
+		}
+		out = append(out, TreeEnv{Environment: e, Folders: tfs})
+	}
+	return out, nil
+}
 
 // Breadcrumb decrypts the project/env/folder names above a folder.
 func (s *Service) Breadcrumb(dek []byte, folderID string) (Crumb, error) {

@@ -1,6 +1,6 @@
 {{define "content"}}
 <div class="auth-card card">
-  <h1 class="auth-title"><span class="logo" aria-hidden="true">⬡</span> Grafted Secrets</h1>
+  <h1 class="auth-title"><span class="logo">{{template "icon" "hexagon"}}</span> Grafted Secrets</h1>
   {{if eq .Stage "totp"}}
   <p class="auth-sub">Enter your two-factor authentication code.</p>
   <form class="form" method="post" action="/unlock/totp">

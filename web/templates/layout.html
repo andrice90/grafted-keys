@@ -10,20 +10,22 @@
 <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
+{{template "iconSprite"}}
 {{if .Chrome}}
 <header class="topbar">
   <a class="brand" href="/" hx-get="/" hx-target="#main" hx-push-url="true">
-    <span class="logo" aria-hidden="true">⬡</span><span class="brand-name">Grafted</span>
+    <span class="logo">{{template "icon" "hexagon"}}</span><span class="brand-name">Grafted</span>
   </a>
   <div class="search" role="search">
+    <span class="search-ico">{{template "icon" "search"}}</span>
     <input type="search" name="q" placeholder="Search secrets or folders…" aria-label="Search secrets"
       hx-get="/search" hx-target="#main" hx-push-url="true"
       hx-trigger="input changed delay:200ms, search" autocomplete="off" data-search>
   </div>
   <nav class="actions" aria-label="Primary">
-    <button class="icon-btn" type="button" data-theme-toggle aria-label="Toggle color theme">◐</button>
-    <a class="icon-btn" href="/settings" hx-get="/settings" hx-target="#main" hx-push-url="true" aria-label="Settings">⚙</a>
-    <button class="icon-btn" type="button" hx-post="/lock" aria-label="Lock vault">⏻</button>
+    <button class="icon-btn" type="button" data-theme-toggle aria-label="Toggle color theme">{{template "icon" "sun-moon"}}</button>
+    <a class="icon-btn" href="/settings" hx-get="/settings" hx-target="#main" hx-push-url="true" aria-label="Settings">{{template "icon" "settings"}}</a>
+    <button class="icon-btn" type="button" hx-post="/lock" aria-label="Lock vault">{{template "icon" "lock"}}</button>
   </nav>
 </header>
 {{end}}
@@ -34,10 +36,10 @@
 
 {{if .Chrome}}
 <nav class="bottombar" aria-label="Quick actions">
-  <a href="/" hx-get="/" hx-target="#main" hx-push-url="true" aria-label="Home">⌂</a>
-  <button type="button" data-focus-search aria-label="Search">⌕</button>
-  <a href="/settings" hx-get="/settings" hx-target="#main" hx-push-url="true" aria-label="Settings">⚙</a>
-  <button type="button" hx-post="/lock" aria-label="Lock vault">⏻</button>
+  <a href="/" hx-get="/" hx-target="#main" hx-push-url="true" aria-label="Home">{{template "icon" "house"}}</a>
+  <button type="button" data-focus-search aria-label="Search">{{template "icon" "search"}}</button>
+  <a href="/settings" hx-get="/settings" hx-target="#main" hx-push-url="true" aria-label="Settings">{{template "icon" "settings"}}</a>
+  <button type="button" hx-post="/lock" aria-label="Lock vault">{{template "icon" "lock"}}</button>
 </nav>
 {{end}}
 
