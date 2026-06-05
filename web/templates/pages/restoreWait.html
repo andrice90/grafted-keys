@@ -1,0 +1,8 @@
+{{define "content"}}
+<div class="auth-card card" data-restore-wait>
+  <h1 class="auth-title"><span class="logo">{{template "icon" "hexagon"}}</span> Restoring vault</h1>
+  {{if .Safety}}<p class="auth-sub">A safety backup of your previous vault was saved as <code>{{.Safety}}</code>.</p>{{end}}
+  <p class="auth-sub">The backup is being applied and the app is restarting. This page will move to the unlock screen automatically when it&rsquo;s ready.</p>
+  <p class="hint">Unlock with the passphrase that was set when that backup was made. If this doesn&rsquo;t advance after a few seconds, <a href="/unlock">reload and unlock</a>.</p>
+</div>
+{{end}}

@@ -51,6 +51,41 @@ type Config struct {
 // DBPath is the SQLite database file location.
 func (c Config) DBPath() string { return filepath.Join(c.DataDir, "grafted.db") }
 
+// Setting keys for the runtime-adjustable values persisted in the database.
+// A stored value overrides the corresponding env default (see WithOverrides).
+const (
+	KeyBackupAt    = "backup_at"
+	KeyBackupKeep  = "backup_keep"
+	KeySessionIdle = "session_idle"
+	KeySessionMax  = "session_max"
+)
+
+// WithOverrides returns a copy of c with any persisted settings applied on top
+// of the env-derived values, re-validated. Unknown or unparseable values are
+// ignored so a malformed row can never brick startup. DataDir/BackupDir are not
+// overridable (they are filesystem mounts, not runtime knobs).
+func (c Config) WithOverrides(kv map[string]string) (Config, error) {
+	if v, ok := kv[KeyBackupAt]; ok {
+		c.BackupAt = v
+	}
+	if v, ok := kv[KeyBackupKeep]; ok {
+		if n, err := strconv.Atoi(v); err == nil {
+			c.BackupKeep = n
+		}
+	}
+	if v, ok := kv[KeySessionIdle]; ok {
+		if d, err := time.ParseDuration(v); err == nil {
+			c.SessionIdle = d
+		}
+	}
+	if v, ok := kv[KeySessionMax]; ok {
+		if d, err := time.ParseDuration(v); err == nil {
+			c.SessionMax = d
+		}
+	}
+	return c, c.Validate()
+}
+
 // Load reads configuration from the environment and validates it.
 func Load() (Config, error) {
 	c := Config{

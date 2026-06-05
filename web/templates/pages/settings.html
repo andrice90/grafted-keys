@@ -39,8 +39,76 @@
 </section>
 
 <section class="card setting">
-  <h2>Backup</h2>
-  <p>Write an encrypted snapshot now. Scheduled backups also run automatically and are pruned by retention.</p>
+  <h2>Backup schedule</h2>
+  <dl class="applied" aria-label="Currently applied backup settings">
+    <div><dt>Scheduled backup</dt><dd>{{if .BackupEnabled}}Daily at {{.BackupAt}}{{else}}Disabled{{end}}</dd></div>
+    <div><dt>Retention</dt><dd>Keep {{.BackupKeep}} most recent</dd></div>
+  </dl>
+  <p class="hint">These are the rules your container is running right now. Saving updates them live - no restart.</p>
+  <form class="form" hx-post="/settings/backup-config" hx-target="#main">
+    <label class="check"><input type="checkbox" name="enabled" value="1" {{if .BackupEnabled}}checked{{end}}> Run a scheduled daily backup</label>
+    <label>Time of day (24-hour) <input name="at" type="time" value="{{.BackupAt}}"></label>
+    <label>Keep most recent <input name="keep" type="number" min="1" step="1" value="{{.BackupKeep}}" required></label>
+    <menu class="form-actions"><button class="btn primary" type="submit">Save backup settings</button></menu>
+  </form>
   <form hx-post="/settings/backup" hx-target="#main"><button class="btn" type="submit">Back up now</button></form>
+</section>
+
+<section class="card setting">
+  <h2>Session timeouts</h2>
+  <dl class="applied" aria-label="Currently applied session settings">
+    <div><dt>Lock after idle</dt><dd>{{.SessionIdle}}</dd></div>
+    <div><dt>Maximum session</dt><dd>{{.SessionMax}}</dd></div>
+  </dl>
+  <p class="hint">Durations like <code>30m</code>, <code>2h</code>, <code>12h</code>. Saving applies on your next request.</p>
+  <form class="form" hx-post="/settings/session-config" hx-target="#main">
+    <label>Lock after idle <input name="idle" value="{{.SessionIdle}}" autocomplete="off" required></label>
+    <label>Maximum session <input name="max" value="{{.SessionMax}}" autocomplete="off" required></label>
+    <menu class="form-actions"><button class="btn primary" type="submit">Save session settings</button></menu>
+  </form>
+</section>
+
+<section class="card setting">
+  <h2>Backup files</h2>
+  {{if .Backups}}
+  <ul class="backup-list">
+    {{range .Backups}}
+    <li>
+      <a class="backup-link" href="/settings/backups/{{.Name}}" download>
+        <span class="backup-name">{{.Name}}</span>
+        <span class="backup-meta">{{.When}} &middot; {{.Size}}</span>
+      </a>
+    </li>
+    {{end}}
+  </ul>
+  <p class="hint">Each file is the full encrypted vault. Click to download in your browser.</p>
+  {{else}}
+  <p class="hint">No backups yet. Use &ldquo;Back up now&rdquo; above to create one.</p>
+  {{end}}
+</section>
+
+<section class="card setting">
+  <h2>Restore</h2>
+  <p><strong>Restoring overwrites the entire vault</strong> with the chosen backup. A safety backup of the current vault is taken automatically first. Afterwards the app restarts and you unlock with the passphrase that was set when that backup was made.</p>
+  <form class="form" method="post" action="/settings/restore" enctype="multipart/form-data">
+    <input type="hidden" name="_csrf" value="{{.CSRF}}">
+    <fieldset class="restore-source">
+      <legend>Source</legend>
+      <label class="radio"><input type="radio" name="source" value="existing" {{if .Backups}}checked{{end}}> Use an existing backup</label>
+      {{if .Backups}}
+      <label>Backup file
+        <select name="existing_name">
+          {{range .Backups}}<option value="{{.Name}}">{{.Name}} &mdash; {{.When}} &middot; {{.Size}}</option>{{end}}
+        </select>
+      </label>
+      {{end}}
+      <label class="radio"><input type="radio" name="source" value="upload" {{if not .Backups}}checked{{end}}> Upload a backup file</label>
+      <label>File <input type="file" name="file" accept=".db"></label>
+    </fieldset>
+    <label>Type <code>restore backup</code> to confirm
+      <input name="confirm" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="restore backup" required>
+    </label>
+    <menu class="form-actions"><button class="btn danger" type="submit">Restore backup</button></menu>
+  </form>
 </section>
 {{end}}

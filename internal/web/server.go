@@ -13,21 +13,33 @@ import (
 	"github.com/andrew/grafted-secrets/internal/auth"
 	"github.com/andrew/grafted-secrets/internal/config"
 	"github.com/andrew/grafted-secrets/internal/crypto"
+	"github.com/andrew/grafted-secrets/internal/store"
 	"github.com/andrew/grafted-secrets/internal/vault"
 )
+
+// backupController is the slice of the backup scheduler the web layer drives:
+// on-demand snapshots plus reading and live-reconfiguring the schedule.
+type backupController interface {
+	Snapshot() (string, error)
+	Schedule() (at string, keep int)
+	SetSchedule(at string, keep int)
+}
 
 type Server struct {
 	cfg      config.Config
 	vault    *vault.Service
 	sessions *auth.Sessions
 	limiter  *auth.Limiter
+	db       *store.DB
+	backups  backupController
 	rd       *Renderer
 	static   http.Handler
 	mux      http.Handler
 	assetVer string // content hash of css+js, for cache-busting
 
-	// snapshot triggers a manual backup (wired from the backup scheduler).
-	snapshot func() (string, error)
+	// restart asks the process to shut down gracefully; the container restart
+	// policy brings it back. Used to apply a staged restore on a clean boot.
+	restart func()
 }
 
 // assetVersion is a short content hash of the cacheable assets, appended to
@@ -43,7 +55,7 @@ func assetVersion(assets fs.FS) string {
 }
 
 func NewServer(cfg config.Config, v *vault.Service, sessions *auth.Sessions, limiter *auth.Limiter,
-	snapshot func() (string, error), assets fs.FS) (*Server, error) {
+	db *store.DB, backups backupController, restart func(), assets fs.FS) (*Server, error) {
 	rd, err := NewRenderer(assets)
 	if err != nil {
 		return nil, err
@@ -54,7 +66,8 @@ func NewServer(cfg config.Config, v *vault.Service, sessions *auth.Sessions, lim
 	}
 	s := &Server{
 		cfg: cfg, vault: v, sessions: sessions, limiter: limiter,
-		rd: rd, static: http.FileServerFS(staticFS), snapshot: snapshot,
+		db: db, backups: backups, restart: restart,
+		rd: rd, static: http.FileServerFS(staticFS),
 		assetVer: assetVersion(assets),
 	}
 	s.routes()
@@ -130,6 +143,10 @@ func (s *Server) routes() {
 	mux.HandleFunc("POST /settings/totp/confirm", s.needDEK(s.totpConfirm))
 	mux.HandleFunc("POST /settings/totp/disable", s.needDEK(s.totpDisable))
 	mux.HandleFunc("POST /settings/backup", s.needDEK(s.backupNow))
+	mux.HandleFunc("POST /settings/backup-config", s.needDEK(s.saveBackupConfig))
+	mux.HandleFunc("POST /settings/session-config", s.needDEK(s.saveSessionConfig))
+	mux.HandleFunc("GET /settings/backups/{name}", s.needDEK(s.downloadBackup))
+	mux.HandleFunc("POST /settings/restore", s.needDEK(s.restore))
 
 	s.mux = s.recoverMW(s.secureHeadersMW(s.sessionMW(s.csrfMW(mux))))
 }

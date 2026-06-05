@@ -51,6 +51,22 @@ func NewSessions(idle, max time.Duration) *Sessions {
 	return &Sessions{m: make(map[string]*Session), idle: idle, max: max}
 }
 
+// Timeouts returns the live idle and absolute session timeouts.
+func (s *Sessions) Timeouts() (idle, max time.Duration) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.idle, s.max
+}
+
+// SetTimeouts updates the live idle and absolute session timeouts. New values
+// are enforced on the next request (idle is re-evaluated against lastSeen) and
+// by the periodic sweep, so a shortened window can lock idle sessions sooner.
+func (s *Sessions) SetTimeouts(idle, max time.Duration) {
+	s.mu.Lock()
+	s.idle, s.max = idle, max
+	s.mu.Unlock()
+}
+
 // New creates a session with a fresh CSPRNG id and CSRF token. dek may be nil
 // (pre-auth); pending marks a TOTP-outstanding session. The returned Session
 // must be treated as read-only by callers.

@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	_ "modernc.org/sqlite"
 )
@@ -46,6 +47,72 @@ func (db *DB) Close() error { return db.sql.Close() }
 
 // Raw exposes the underlying handle (used by the backup snapshot).
 func (db *DB) Raw() *sql.DB { return db.sql }
+
+// Settings returns all runtime-adjustable operational settings as key→value.
+func (db *DB) Settings() (map[string]string, error) {
+	rows, err := db.sql.Query(`SELECT key, value FROM app_settings`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := map[string]string{}
+	for rows.Next() {
+		var k, v string
+		if err := rows.Scan(&k, &v); err != nil {
+			return nil, err
+		}
+		out[k] = v
+	}
+	return out, rows.Err()
+}
+
+// SetSettings upserts the given key→value settings in a single transaction.
+func (db *DB) SetSettings(kv map[string]string) error {
+	tx, err := db.sql.Begin()
+	if err != nil {
+		return err
+	}
+	now := time.Now().Unix()
+	for k, v := range kv {
+		if _, err := tx.Exec(
+			`INSERT INTO app_settings (key, value, updated_at) VALUES (?, ?, ?)
+			 ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+			k, v, now); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
+// ValidateVaultFile opens path read-only and confirms it is a usable Grafted
+// vault database (correct schema version and an initialized vault row). It is
+// used to vet a backup file before a restore swaps it into place.
+func ValidateVaultFile(path string) error {
+	sdb, err := sql.Open("sqlite", "file:"+path+"?mode=ro&_pragma=query_only(1)")
+	if err != nil {
+		return err
+	}
+	defer sdb.Close()
+	if err := sdb.Ping(); err != nil {
+		return fmt.Errorf("not a readable database: %w", err)
+	}
+	var version int
+	if err := sdb.QueryRow(`PRAGMA user_version`).Scan(&version); err != nil {
+		return fmt.Errorf("not a SQLite database: %w", err)
+	}
+	if version < 1 || version > len(migrations) {
+		return fmt.Errorf("unsupported schema version %d (this binary supports 1..%d)", version, len(migrations))
+	}
+	var n int
+	if err := sdb.QueryRow(`SELECT count(*) FROM vault WHERE id = 1`).Scan(&n); err != nil {
+		return fmt.Errorf("missing vault table: %w", err)
+	}
+	if n != 1 {
+		return errors.New("no initialized vault in file")
+	}
+	return nil
+}
 
 // migrations are applied in order; index+1 is the schema version.
 var migrations = []string{
@@ -119,6 +186,15 @@ var migrations = []string{
 	ALTER TABLE secrets_new RENAME TO secrets;
 	CREATE INDEX idx_secret_folder ON secrets(folder_id);
 	CREATE INDEX idx_secret_env    ON secrets(environment_id);`,
+
+	// Runtime-adjustable operational settings (backup schedule/retention, session
+	// timeouts). These are plaintext, not secrets, so they can be read before the
+	// vault is unlocked and override the corresponding env defaults at startup.
+	`CREATE TABLE app_settings (
+		key        TEXT PRIMARY KEY,
+		value      TEXT NOT NULL,
+		updated_at INTEGER NOT NULL
+	);`,
 }
 
 func (db *DB) migrate() error {

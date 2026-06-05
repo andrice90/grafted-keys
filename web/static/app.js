@@ -266,4 +266,20 @@
   document.addEventListener('htmx:responseError', function () {
     announce('Something went wrong. Please try again.');
   });
+
+  // --- restore interstitial: wait for the server to bounce, then go to unlock ---
+  // The restore stages a new database and restarts the process. We poll /healthz
+  // until we've seen it go down and come back, then send the user to unlock.
+  (function restoreWait() {
+    if (!document.querySelector('[data-restore-wait]')) return;
+    var sawDown = false;
+    function ping() {
+      fetch('/healthz', { cache: 'no-store' }).then(function (r) {
+        if (!r.ok) throw new Error('not ok');
+        if (sawDown) { location.href = '/unlock'; return; }
+        setTimeout(ping, 1500);
+      }).catch(function () { sawDown = true; setTimeout(ping, 1500); });
+    }
+    setTimeout(ping, 2000);
+  })();
 })();

@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/andrew/grafted-secrets/internal/crypto"
@@ -19,31 +20,69 @@ import (
 const prefix = "grafted-"
 
 type Scheduler struct {
-	db   *store.DB
-	dir  string
-	at   string // "HH:MM"; empty disables scheduling
-	keep int
+	db  *store.DB
+	dir string
+
+	mu     sync.Mutex
+	at     string // "HH:MM"; empty disables scheduling
+	keep   int
+	reload chan struct{} // nudges Run to recompute after a live schedule change
 }
 
 func New(db *store.DB, dir, at string, keep int) *Scheduler {
-	return &Scheduler{db: db, dir: dir, at: at, keep: keep}
+	if keep < 1 {
+		keep = 1
+	}
+	return &Scheduler{db: db, dir: dir, at: at, keep: keep, reload: make(chan struct{}, 1)}
+}
+
+// Schedule returns the currently active backup time ("HH:MM"; empty = disabled)
+// and retention count.
+func (s *Scheduler) Schedule() (at string, keep int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.at, s.keep
+}
+
+// SetSchedule updates the live backup time and retention and wakes Run so the
+// change takes effect immediately (no restart).
+func (s *Scheduler) SetSchedule(at string, keep int) {
+	if keep < 1 {
+		keep = 1
+	}
+	s.mu.Lock()
+	s.at, s.keep = at, keep
+	s.mu.Unlock()
+	select {
+	case s.reload <- struct{}{}:
+	default: // a reload is already pending
+	}
 }
 
 // Run blocks until ctx is cancelled, taking a snapshot daily at the configured
-// time. A disabled schedule (empty at) simply waits for cancellation.
+// time. A disabled schedule (empty at) waits until enabled or cancelled. Live
+// schedule changes (SetSchedule) recompute the next fire immediately.
 func (s *Scheduler) Run(ctx context.Context) {
-	if s.at == "" {
-		<-ctx.Done()
-		return
-	}
 	for {
-		d := untilNext(s.at, time.Now())
-		t := time.NewTimer(d)
+		at, _ := s.Schedule()
+		var fire <-chan time.Time
+		var t *time.Timer
+		if at != "" {
+			t = time.NewTimer(untilNext(at, time.Now()))
+			fire = t.C
+		}
 		select {
 		case <-ctx.Done():
-			t.Stop()
+			if t != nil {
+				t.Stop()
+			}
 			return
-		case <-t.C:
+		case <-s.reload:
+			if t != nil {
+				t.Stop()
+			}
+			// loop: recompute with the new schedule
+		case <-fire:
 			if path, err := s.Snapshot(); err != nil {
 				log.Printf("backup: snapshot failed: %v", err)
 			} else {
@@ -85,7 +124,10 @@ func (s *Scheduler) prune() error {
 		}
 	}
 	sort.Sort(sort.Reverse(sort.StringSlice(names))) // timestamp names sort chronologically
-	for i := s.keep; i < len(names); i++ {
+	s.mu.Lock()
+	keep := s.keep
+	s.mu.Unlock()
+	for i := keep; i < len(names); i++ {
 		if err := os.Remove(filepath.Join(s.dir, names[i])); err != nil {
 			return err
 		}
