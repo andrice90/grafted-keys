@@ -77,6 +77,7 @@
   <div class="kv"><span>Key</span><code class="totp-secret">{{.Secret}}</code></div>
   <div class="kv"><span>URI</span><code class="totp-uri">{{.URI}}</code></div>
   <form class="form" hx-post="/settings/totp/confirm" hx-target="#main">
+    <input type="hidden" name="secret" value="{{.Secret}}">
     <label>6-digit code
       <input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="6" required>
     </label>
