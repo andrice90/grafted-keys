@@ -268,18 +268,25 @@
   });
 
   // --- restore interstitial: wait for the server to bounce, then go to unlock ---
-  // The restore stages a new database and restarts the process. We poll /healthz
-  // until we've seen it go down and come back, then send the user to unlock.
+  // The restore stages a new database and restarts the process. Once graceful
+  // shutdown begins the old server refuses new connections, so the first healthz
+  // that succeeds is the restarted server -> go straight to unlock. Each probe is
+  // abort-timed because a restarting Docker proxy can accept then hang the socket.
   (function restoreWait() {
     if (!document.querySelector('[data-restore-wait]')) return;
-    var sawDown = false;
-    function ping() {
-      fetch('/healthz', { cache: 'no-store' }).then(function (r) {
-        if (!r.ok) throw new Error('not ok');
-        if (sawDown) { location.href = '/unlock'; return; }
-        setTimeout(ping, 1500);
-      }).catch(function () { sawDown = true; setTimeout(ping, 1500); });
+    var done = false;
+    function go() { if (!done) { done = true; location.href = '/unlock'; } }
+    function poll() {
+      if (done) return;
+      var ctrl = new AbortController();
+      var to = setTimeout(function () { ctrl.abort(); }, 1500);
+      fetch('/healthz', { cache: 'no-store', signal: ctrl.signal })
+        .then(function (r) { clearTimeout(to); if (r.ok) { go(); } else { setTimeout(poll, 1200); } })
+        .catch(function () { clearTimeout(to); setTimeout(poll, 1200); });
     }
-    setTimeout(ping, 2000);
+    // Brief head start so the restart is underway before the first probe; then a
+    // hard fallback so the page can never get stuck if probing somehow stalls.
+    setTimeout(poll, 2500);
+    setTimeout(go, 25000);
   })();
 })();
