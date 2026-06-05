@@ -1,5 +1,5 @@
 // Package store is the persistence layer. It deals exclusively in ciphertext
-// (encrypted BLOB columns) and opaque IDs — it never sees plaintext or keys.
+// (encrypted BLOB columns) and opaque IDs - it never sees plaintext or keys.
 package store
 
 import (
@@ -127,7 +127,7 @@ func (db *DB) migrate() error {
 		return err
 	}
 	if version > len(migrations) {
-		return fmt.Errorf("store: database schema version %d is newer than this binary supports (%d) — upgrade the app or restore a compatible backup", version, len(migrations))
+		return fmt.Errorf("store: database schema version %d is newer than this binary supports (%d) - upgrade the app or restore a compatible backup", version, len(migrations))
 	}
 	for i := version; i < len(migrations); i++ {
 		tx, err := db.sql.Begin()

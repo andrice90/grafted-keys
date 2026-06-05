@@ -7,5 +7,5 @@
   <button class="btn primary" type="button" hx-get="/projects/{{.Project.ID}}/new-env" hx-target="#dialog">{{template "icon" "plus"}} Environment</button>
 </div>
 <ul class="tree" id="tree">{{range .Envs}}{{template "envNode" .}}{{end}}</ul>
-<p class="empty tree-empty">No environments yet — add one (e.g. development, staging, production) to start.</p>
+<p class="empty tree-empty">No environments yet - add one (e.g. development, staging, production) to start.</p>
 {{end}}

@@ -2,13 +2,23 @@ package web
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/andrew/grafted-secrets/internal/auth"
 	"github.com/andrew/grafted-secrets/internal/crypto"
 	"github.com/andrew/grafted-secrets/internal/vault"
 )
+
+func retryAfterSecs(d time.Duration) string {
+	secs := int(d.Seconds())
+	if secs < 1 {
+		secs = 1
+	}
+	return fmt.Sprintf("%d", secs)
+}
 
 const minPassphrase = 8
 
@@ -19,7 +29,7 @@ type authView struct {
 }
 
 // preauth returns the current session, creating a pre-auth (DEK-less) session
-// with a cookie if none exists — so login forms can carry a CSRF token.
+// with a cookie if none exists - so login forms can carry a CSRF token.
 func (s *Server) preauth(w http.ResponseWriter, r *http.Request) *auth.Session {
 	if sess := sessionFrom(r.Context()); sess != nil {
 		return sess
@@ -106,6 +116,7 @@ func (s *Server) postUnlock(w http.ResponseWriter, r *http.Request) {
 		s.rd.Page(w, r, "unlock", authView{Base: s.authBase(r, sess), Stage: stage, Error: msg})
 	}
 	if !s.limiter.Allowed(ip) {
+		w.Header().Set("Retry-After", retryAfterSecs(s.limiter.RetryAfter(ip)))
 		w.WriteHeader(http.StatusTooManyRequests)
 		render("passphrase", "Too many attempts. Try again later.")
 		return
@@ -151,6 +162,7 @@ func (s *Server) postUnlockTOTP(w http.ResponseWriter, r *http.Request) {
 		s.rd.Page(w, r, "unlock", authView{Base: s.authBase(r, sess), Stage: "totp", Error: msg})
 	}
 	if !s.limiter.Allowed(ip) {
+		w.Header().Set("Retry-After", retryAfterSecs(s.limiter.RetryAfter(ip)))
 		w.WriteHeader(http.StatusTooManyRequests)
 		render("Too many attempts. Try again later.")
 		return

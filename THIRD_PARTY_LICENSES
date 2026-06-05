@@ -1,0 +1,64 @@
+Third-Party Licenses
+====================
+
+Grafted Keys incorporates or links against the following open-source components.
+All are compatible with the MIT license under which this project is distributed.
+
+--------------------------------------------------------------------------------
+htmx 2.0.4  (vendored in web/static/vendor/htmx.min.js)
+--------------------------------------------------------------------------------
+BSD 2-Clause License
+
+Copyright (c) 2020, Big Sky Software LLC
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+--------------------------------------------------------------------------------
+Go module dependencies
+--------------------------------------------------------------------------------
+The following modules are fetched at build time via Go modules. Their license
+texts are available in the module cache (run `go mod download` then inspect
+$GOPATH/pkg/mod) or via `go-licenses`.
+
+  github.com/microcosm-cc/bluemonday  BSD-2-Clause
+  github.com/pquerna/otp              Apache-2.0
+  github.com/yuin/goldmark            MIT
+  golang.org/x/crypto                 BSD-3-Clause  (Go Authors)
+  modernc.org/sqlite                  BSD-3-Clause
+  github.com/aymerick/douceur         MIT
+  github.com/boombuler/barcode        MIT
+  github.com/dustin/go-humanize       MIT
+  github.com/google/uuid              BSD-3-Clause
+  github.com/gorilla/css              BSD-3-Clause
+  github.com/mattn/go-isatty          MIT
+  github.com/ncruces/go-strftime      MIT
+  github.com/remyoudompheng/bigfft    BSD-3-Clause
+  golang.org/x/net                    BSD-3-Clause  (Go Authors)
+  golang.org/x/sys                    BSD-3-Clause  (Go Authors)
+  modernc.org/libc                    BSD-3-Clause
+  modernc.org/mathutil                BSD-3-Clause
+  modernc.org/memory                  BSD-3-Clause
+
+Note on Apache-2.0 (pquerna/otp): the Apache 2.0 license is compatible with
+MIT for distribution. If you ship compiled binaries you must include the Apache
+2.0 license text and any NOTICE file from that module alongside the binary.

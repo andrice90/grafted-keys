@@ -94,7 +94,7 @@ func (rd *Renderer) exec(w http.ResponseWriter, t *template.Template, name strin
 }
 
 // Markdown converts user markdown to sanitized HTML (goldmark output is the input
-// to bluemonday — sanitize the rendered HTML, never the raw markdown).
+// to bluemonday - sanitize the rendered HTML, never the raw markdown).
 func (rd *Renderer) Markdown(src string) template.HTML {
 	var buf bytes.Buffer
 	if err := rd.md.Convert([]byte(src), &buf); err != nil {
@@ -118,7 +118,7 @@ func dict(kv ...any) map[string]any {
 
 // highlight escapes text and wraps case-insensitive matches of q in <mark>.
 // Matching is done on the original string (via regexp) so byte indices always
-// align — case folding that changes byte length can never cause a slice panic.
+// align - case folding that changes byte length can never cause a slice panic.
 func highlight(text, q string) template.HTML {
 	q = strings.TrimSpace(q)
 	if q == "" {

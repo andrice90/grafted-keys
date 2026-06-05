@@ -16,7 +16,7 @@ import (
 var (
 	ErrNotInit       = errors.New("vault: not initialized")
 	ErrAlreadyInit   = errors.New("vault: already initialized")
-	ErrOrphanData    = errors.New("vault: encrypted data present but vault metadata missing — restore from backup")
+	ErrOrphanData    = errors.New("vault: encrypted data present but vault metadata missing - restore from backup")
 	ErrBadPassphrase = errors.New("vault: incorrect passphrase")
 )
 

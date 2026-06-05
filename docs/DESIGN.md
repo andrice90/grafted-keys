@@ -1,4 +1,4 @@
-# Grafted Secrets — Design & Threat Model
+# Grafted Secrets - Design & Threat Model
 
 A minimal, security-hardened, self-hostable secrets manager + backup service.
 Single static Go binary, embedded assets, SQLite, zero-knowledge encryption.
@@ -16,7 +16,7 @@ Single static Go binary, embedded assets, SQLite, zero-knowledge encryption.
 **Non-goals**
 - Multi-user / RBAC, SSO, secret sharing, audit log streaming.
 - Protection against a fully-compromised running host while the vault is unlocked
-  (the data key is necessarily in RAM then — same as every secrets manager).
+  (the data key is necessarily in RAM then - same as every secrets manager).
 - Recovery if the master passphrase is lost (zero-knowledge ⇒ unrecoverable).
 
 ## Hierarchy & data model
@@ -31,7 +31,7 @@ stored as **ciphertext BLOBs**. Only structural IDs, foreign keys, sort order an
 timestamps are plaintext. Search runs in memory after unlock.
 
 SQLite tables (pure-Go `modernc.org/sqlite`, CGO-free → static binary):
-- `vault`  — single row: kdf params, salt, wrapped DEK (+nonce), totp (enc), flags.
+- `vault`  - single row: kdf params, salt, wrapped DEK (+nonce), totp (enc), flags.
 - `projects(id, name_enc, sort, created_at, updated_at)`
 - `environments(id, project_id, name_enc, sort, …)`
 - `folders(id, environment_id, name_enc, sort, …)`
@@ -54,17 +54,17 @@ Primitives: **Argon2id** (KDF) + **AES-256-GCM** (AEAD). Stdlib + `x/crypto`.
 
 **Unlock (login)**
 1. `KEK = Argon2id(passphrase, salt, params)`.
-2. `DEK = AES-GCM-Open(KEK, wrappedDEK)` — GCM auth tag failure ⇒ wrong passphrase.
+2. `DEK = AES-GCM-Open(KEK, wrappedDEK)` - GCM auth tag failure ⇒ wrong passphrase.
 3. If TOTP enabled: decrypt totp secret with DEK, verify code; else discard DEK.
 4. On success, DEK is held in the in-memory session (keyed by session id).
 
-**Field encryption** — every field: `nonce(12) || ciphertext || tag`, key = DEK,
+**Field encryption** - every field: `nonce(12) || ciphertext || tag`, key = DEK,
 fresh random nonce per write. Helpers `Seal(DEK, plaintext)` / `Open(DEK, blob)`.
 
-**Passphrase change** — re-derive KEK from new passphrase (new salt), re-wrap the
+**Passphrase change** - re-derive KEK from new passphrase (new salt), re-wrap the
 *same* DEK. No bulk re-encryption. TOTP secret unaffected.
 
-**Why key-wrapping** — decouples passphrase from data: cheap passphrase rotation,
+**Why key-wrapping** - decouples passphrase from data: cheap passphrase rotation,
 single DEK to protect, and unlock = a single GCM open (fast, authenticated).
 
 ## Authentication & sessions
@@ -91,7 +91,7 @@ single DEK to protect, and unlock = a single GCM open (fast, authenticated).
   `X-Frame-Options: DENY`, minimal `Permissions-Policy`, optional HSTS (TLS only).
 - Cache-Control `no-store` on dynamic responses; long immutable cache on hashed
   static assets.
-- Generic auth errors (no user enumeration / timing oracles — constant-time compares).
+- Generic auth errors (no user enumeration / timing oracles - constant-time compares).
 - Reverse-proxy aware: trust `X-Forwarded-For` only when `GRAFTED_TRUST_PROXY=1`.
 
 ## Frontend (no build step, fully offline)
@@ -99,7 +99,7 @@ single DEK to protect, and unlock = a single GCM open (fast, authenticated).
 - Go `html/template`: `layout.html` scaffold composes partials (`_tree`, `_card`,
   `_secret_form`, `_search_results`, …).
 - **htmx** (vendored, pinned) for partial updates: live search, inline add/edit,
-  reveal, delete — CSP-safe (no eval).
+  reveal, delete - CSP-safe (no eval).
 - **Tiny vanilla `app.js`** (no Alpine): theme toggle + persistence, copy-to-clipboard,
   reveal/hide value, expand notes, modal open/close. Keeps `script-src 'self'`.
 - **Markdown notes**: rendered server-side with `goldmark`, sanitized with
@@ -116,7 +116,7 @@ single DEK to protect, and unlock = a single GCM open (fast, authenticated).
   `GRAFTED_BACKUP_INTERVAL`. Snapshot via `VACUUM INTO '/backups/grafted-<ts>.db'`
   (consistent copy; already ciphertext at rest ⇒ backup is encrypted).
 - Retention: keep newest `GRAFTED_BACKUP_KEEP` (default 14), prune older.
-- Runs even while locked (no DEK needed — it copies ciphertext).
+- Runs even while locked (no DEK needed - it copies ciphertext).
 - Restore: stop, replace `grafted.db`, start, unlock with the same passphrase.
 - Manual "Backup now" button triggers the same path.
 
@@ -134,7 +134,7 @@ internal/backup              scheduler, VACUUM INTO snapshot, prune
 web/templates, web/static    embedded UI (templates, css, js, vendored htmx)
 ```
 
-Routing: Go 1.22+ `http.ServeMux` method+pattern routes — no router dependency.
+Routing: Go 1.22+ `http.ServeMux` method+pattern routes - no router dependency.
 
 ## Dependencies (intentionally few, all pure-Go)
 `modernc.org/sqlite`, `golang.org/x/crypto`, `github.com/yuin/goldmark`,
@@ -166,7 +166,7 @@ These supersede/clarify the sections above after the adversarial design review.
   Rows therefore use app-generated random string IDs (known before insert).
 - Argon2id **hard floors** enforced in code: `m ≥ 19 MiB, t ≥ 2, p ≥ 1`; defaults
   `m=64 MiB, t=3, p=min(4,NumCPU)`. Env can raise, never lower past the floor.
-  (Unlock transiently spikes RAM by ~m MiB — accounted for in the mem_limit.)
+  (Unlock transiently spikes RAM by ~m MiB - accounted for in the mem_limit.)
 - **Atomic setup** in one tx; the freshly-wrapped DEK is test-unwrapped before
   commit. An explicit `initialized` marker defines vault state. Setup is **refused
   if any encrypted data rows already exist** (prevents silent re-key/data-loss and

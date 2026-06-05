@@ -13,7 +13,7 @@
   <p>2FA is <strong>enabled</strong> for unlock.</p>
   <form hx-post="/settings/totp/disable" hx-target="#main"><button class="btn danger" type="submit">Disable 2FA</button></form>
   {{else}}
-  <p>Require a time-based one-time code as a second factor at unlock. Note: the master passphrase alone still decrypts data at rest — 2FA is an online gate.</p>
+  <p>Require a time-based one-time code as a second factor at unlock. Note: the master passphrase alone still decrypts data at rest - 2FA is an online gate.</p>
   <button class="btn primary" type="button" hx-post="/settings/totp/begin" hx-target="#totp-area">Enable 2FA</button>
   <div id="totp-area"></div>
   {{end}}

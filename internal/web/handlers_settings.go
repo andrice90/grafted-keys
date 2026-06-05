@@ -34,6 +34,7 @@ func (s *Server) settings(w http.ResponseWriter, r *http.Request, sess *auth.Ses
 func (s *Server) changePassphrase(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
 	ip := auth.ClientIP(r, s.cfg.TrustProxy)
 	if !s.limiter.Allowed(ip) {
+		w.Header().Set("Retry-After", retryAfterSecs(s.limiter.RetryAfter(ip)))
 		w.WriteHeader(http.StatusTooManyRequests)
 		s.renderSettings(w, r, sess, "", "Too many attempts. Try again later.")
 		return
@@ -75,6 +76,7 @@ func (s *Server) changePassphrase(w http.ResponseWriter, r *http.Request, sess *
 func (s *Server) rekey(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
 	ip := auth.ClientIP(r, s.cfg.TrustProxy)
 	if !s.limiter.Allowed(ip) {
+		w.Header().Set("Retry-After", retryAfterSecs(s.limiter.RetryAfter(ip)))
 		w.WriteHeader(http.StatusTooManyRequests)
 		s.renderSettings(w, r, sess, "", "Too many attempts. Try again later.")
 		return

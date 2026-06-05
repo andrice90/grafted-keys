@@ -6,7 +6,7 @@ import (
 )
 
 // Limiter throttles failed unlock attempts. It enforces BOTH a per-IP lockout
-// and a global lockout — the global one cannot be bypassed by rotating source
+// and a global lockout - the global one cannot be bypassed by rotating source
 // IPs (e.g. via spoofed X-Forwarded-For), which is the real backstop for a
 // single-user vault.
 type Limiter struct {

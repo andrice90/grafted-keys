@@ -92,4 +92,8 @@ not cryptographic 2FA - the passphrase alone decrypts data at rest.
 
 ## License
 
-MIT
+[MIT](LICENSE) © 2025 Andrew
+
+Third-party components (htmx, Go modules) are listed in
+[THIRD\_PARTY\_LICENSES](THIRD_PARTY_LICENSES) with their respective licenses
+(BSD-2-Clause, BSD-3-Clause, MIT, Apache-2.0 - all MIT-compatible).

@@ -1,4 +1,4 @@
-// Grafted Secrets — minimal vanilla interactions. No inline scripts (strict CSP),
+// Grafted Secrets - minimal vanilla interactions. No inline scripts (strict CSP),
 // no framework. All behavior is wired via event delegation and htmx events.
 (function () {
   'use strict';

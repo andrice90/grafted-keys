@@ -360,7 +360,7 @@ func (s *Service) SecretFolder(id string) (string, error) {
 // ---- navigation & search ----
 
 // Tree returns the full decrypted environment→folder→secret subtree for a
-// project (secret values are NOT decrypted — names/metadata only).
+// project (secret values are NOT decrypted - names/metadata only).
 func (s *Service) Tree(dek []byte, projectID string) ([]TreeEnv, error) {
 	envs, err := s.Environments(dek, projectID)
 	if err != nil {
@@ -427,7 +427,7 @@ func (s *Service) Breadcrumb(dek []byte, folderID string) (Crumb, error) {
 }
 
 // Search matches the query against secret names, notes, and ancestor (project/
-// environment/folder) names — never against secret values. Results expose only
+// environment/folder) names - never against secret values. Results expose only
 // names and the path, never any secret value.
 func (s *Service) Search(dek []byte, query string) ([]SearchHit, error) {
 	q := strings.ToLower(strings.TrimSpace(query))

@@ -142,7 +142,7 @@ func (s *Server) secretNotes(w http.ResponseWriter, r *http.Request, sess *auth.
 }
 
 // revealSecret returns the decrypted value (reveal-on-demand). Plaintext is never
-// present in list/tree responses — only here, behind an explicit user action.
+// present in list/tree responses - only here, behind an explicit user action.
 func (s *Server) revealSecret(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
 	id := r.PathValue("id")
 	val, err := s.vault.SecretValue(dek, id)

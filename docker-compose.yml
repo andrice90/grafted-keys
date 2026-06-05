@@ -7,7 +7,7 @@ services:
     ports:
       - "8080:8080"            # host 8133  ->  container 8080 (where the app listens)
     environment:
-      GRAFTED_ADDR: ":8080"        # internal listen port — leave at 8080; change only the host side above
+      GRAFTED_ADDR: ":8080"        # internal listen port - leave at 8080; change only the host side above
       GRAFTED_BACKUP_AT: "03:00"   # daily snapshot time (HH:MM, 24h)
       GRAFTED_BACKUP_KEEP: "14"    # retain newest N encrypted backups
       GRAFTED_SESSION_IDLE: "30m"  # auto-lock after inactivity

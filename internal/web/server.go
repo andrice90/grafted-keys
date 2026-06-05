@@ -198,8 +198,8 @@ func (s *Server) csrfMW(next http.Handler) http.Handler {
 			return
 		}
 		// Reject only a real cross-origin request. A missing or opaque ("null")
-		// Origin — which Safari sends on same-origin form POSTs reached via a
-		// redirect — is treated as no signal; the synchronizer token below plus
+		// Origin - which Safari sends on same-origin form POSTs reached via a
+		// redirect - is treated as no signal; the synchronizer token below plus
 		// the SameSite=Lax cookie are the actual CSRF protection.
 		if origin := r.Header.Get("Origin"); origin != "" && origin != "null" {
 			if u, err := url.Parse(origin); err != nil || u.Host != r.Host {
