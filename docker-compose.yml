@@ -5,7 +5,7 @@ services:
     container_name: grafted-secrets
     restart: unless-stopped
     ports:
-      - "8133:8080"            # host 8133  ->  container 8080 (where the app listens)
+      - "8080:8080"            # host 8133  ->  container 8080 (where the app listens)
     environment:
       GRAFTED_ADDR: ":8080"        # internal listen port — leave at 8080; change only the host side above
       GRAFTED_BACKUP_AT: "03:00"   # daily snapshot time (HH:MM, 24h)
