@@ -16,6 +16,14 @@ Designed to sit on a LAN and, if you want, behind a reverse proxy.
 > ⚠️ Zero-knowledge means **there is no passphrase recovery**. If you lose your
 > master passphrase, the data is unrecoverable. Keep backups and remember it.
 
+## Screenshots
+
+<img src=".github/gc-screen1.jpeg" alt="Vault overview" width="48%"> <img src=".github/gc-screen2.jpeg" alt="Secret detail" width="48%">
+
+<video src=".github/demo-darkmode.mp4" controls></video>
+
+<video src=".github/demo-md.mp4" controls></video>
+
 ## Quick start (Docker Compose)
 
 ```bash
