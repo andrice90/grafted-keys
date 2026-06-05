@@ -1,4 +1,4 @@
-# Grafted Secrets
+# Grafted Keys
 
 A minimal, security-hardened, **zero-knowledge** secrets manager and backup
 service you can self-host. One small Go binary, embedded UI, SQLite storage.
