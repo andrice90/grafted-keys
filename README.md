@@ -11,7 +11,9 @@ Designed to sit on a LAN and, if you want, behind a reverse proxy.
   AES-256-GCM, read-only rootfs, non-root, dropped capabilities.
 - **Organised** - Project → Environment → Folder → Secret (name, value,
   markdown notes), global search, dark/light, mobile-first UI.
-- **Backups** - scheduled encrypted SQLite snapshots with retention.
+- **Backups** - scheduled encrypted SQLite snapshots with retention, plus
+  in-app download and a guarded restore. Schedule, retention, and session
+  timeouts are editable live in Settings (no restart).
 
 > ⚠️ Zero-knowledge means **there is no passphrase recovery**. If you lose your
 > master passphrase, the data is unrecoverable. Keep backups and remember it.
@@ -62,10 +64,10 @@ Go 1.25+. No Node/JS build step - htmx is vendored and CSS/JS are hand-authored.
 | `GRAFTED_ADDR` | `:8080` | listen address |
 | `GRAFTED_DATA_DIR` | `/data` | SQLite db lives here (`grafted.db`) |
 | `GRAFTED_BACKUP_DIR` | `/backups` | snapshot destination |
-| `GRAFTED_BACKUP_AT` | `03:00` | daily snapshot time `HH:MM` (empty disables) |
-| `GRAFTED_BACKUP_KEEP` | `14` | snapshots to retain |
-| `GRAFTED_SESSION_IDLE` | `30m` | auto-lock after inactivity |
-| `GRAFTED_SESSION_MAX` | `12h` | absolute session lifetime |
+| `GRAFTED_BACKUP_AT` | `03:00` | daily snapshot time `HH:MM` (empty disables) † |
+| `GRAFTED_BACKUP_KEEP` | `14` | snapshots to retain † |
+| `GRAFTED_SESSION_IDLE` | `30m` | auto-lock after inactivity † |
+| `GRAFTED_SESSION_MAX` | `12h` | absolute session lifetime † |
 | `GRAFTED_SECURE_COOKIE` | `1` | set `0` only for plain-HTTP LAN |
 | `GRAFTED_TRUST_PROXY` | `0` | set `1` behind exactly one trusted proxy |
 | `GRAFTED_HSTS` | `0` | set `1` only when served over HTTPS |
@@ -73,12 +75,37 @@ Go 1.25+. No Node/JS build step - htmx is vendored and CSS/JS are hand-authored.
 | `GRAFTED_ARGON_TIME` | `3` | KDF iterations (floored at 2) |
 | `GRAFTED_ARGON_PAR` | `min(4,CPUs)` | KDF parallelism |
 
+† **Overridable in Settings.** These four are only *defaults*: once you change
+the value in the **Settings** page it is stored in the database, takes effect
+immediately (no restart), and from then on wins over the environment variable.
+Clearing the stored value falls back to the env default. `GRAFTED_DATA_DIR` /
+`GRAFTED_BACKUP_DIR` are filesystem mounts and are not runtime-adjustable.
+
 ## Backups & restore
 
 Backups are consistent `VACUUM INTO` copies of the already-encrypted database,
-so they are encrypted and can run while the vault is locked. To restore: stop
-the container, replace `grafted.db` in the data volume with a snapshot, start,
-and unlock with the **same passphrase that created that snapshot**.
+so they are encrypted and can run while the vault is locked.
+
+**From the Settings page** you can:
+
+- Edit the schedule, retention, and session timeouts and see the *currently
+  applied* values update on save.
+- Trigger a snapshot on demand (**Back up now**).
+- **Download** any retained snapshot to your browser.
+- **Restore** from an uploaded file or a snapshot in the list. Restore first
+  takes a safety snapshot of the current vault, then replaces the entire vault
+  with the chosen backup. Because swapping an open SQLite file in-process is
+  unsafe, the swap is applied on the **next clean boot**: the app stages the
+  file and restarts (the container's `restart: unless-stopped` policy brings it
+  back), then you unlock with the **passphrase that created that snapshot**.
+
+A restore therefore requires a restart-capable deployment (Compose with a
+restart policy, the default). For a manual `make run`, the staged restore is
+applied the next time you start the process.
+
+You can still restore the old way too: stop the container, replace `grafted.db`
+in the data volume with a snapshot, start, and unlock with that snapshot's
+passphrase.
 
 ## Security model
 
