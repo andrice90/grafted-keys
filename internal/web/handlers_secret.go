@@ -40,8 +40,10 @@ type secretFormView struct {
 }
 
 type secretDetailView struct {
-	ID    string
-	Notes string
+	ID       string
+	Name     string
+	HasNotes bool
+	Notes    string
 }
 
 type notesFullView struct {
@@ -97,7 +99,7 @@ func (s *Server) editSecretForm(w http.ResponseWriter, r *http.Request, sess *au
 		return
 	}
 	s.rd.Frag(w, "secretForm", secretFormView{
-		Action: "/secrets/" + full.ID, Target: "#secret-" + full.ID, Swap: "outerHTML",
+		Action: "/secrets/" + full.ID, Target: "#detail-" + full.ID, Swap: "innerHTML",
 		ID: full.ID, Name: full.Name, Value: full.Value, Notes: full.Notes,
 	})
 }
@@ -110,7 +112,7 @@ func (s *Server) updateSecret(w http.ResponseWriter, r *http.Request, sess *auth
 		s.fail(w, err)
 		return
 	}
-	s.rd.Frag(w, "secretNode", vault.SecretMeta{ID: id, Name: name, HasNotes: notes != ""})
+	s.rd.Frag(w, "secretDetail", secretDetailView{ID: id, Name: name, HasNotes: notes != "", Notes: notes})
 }
 
 func (s *Server) deleteSecret(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
@@ -128,7 +130,7 @@ func (s *Server) secretDetail(w http.ResponseWriter, r *http.Request, sess *auth
 		s.fail(w, err)
 		return
 	}
-	s.rd.Frag(w, "secretDetail", secretDetailView{ID: full.ID, Notes: full.Notes})
+	s.rd.Frag(w, "secretDetail", secretDetailView{ID: full.ID, Name: full.Name, HasNotes: full.Notes != "", Notes: full.Notes})
 }
 
 // secretNotes returns the full rendered notes for the fullscreen dialog.

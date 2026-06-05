@@ -141,6 +141,18 @@
       const preview = t.dataset.notesMode === 'preview';
       if (ta) ta.hidden = preview;
       if (pv) pv.hidden = !preview;
+      if (preview && pv && ta) {
+        const csrf = $('meta[name=csrf-token]');
+        fetch('/notes/preview', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRF-Token': csrf ? csrf.content : '',
+          },
+          body: 'notes=' + encodeURIComponent(ta.value),
+        }).then(function (r) { return r.text(); }).then(function (html) { pv.innerHTML = html; });
+      }
       return;
     }
 

@@ -87,6 +87,7 @@
   </div>
   {{end}}
 </div>
+{{if .Name}}<span class="node-name" id="name-secret-{{.ID}}" hx-swap-oob="innerHTML">{{.Name}}{{if .HasNotes}} <span class="note-dot" aria-label="has notes">{{template "icon" "file-text"}}</span>{{end}}</span>{{end}}
 {{end}}
 
 {{define "secretValue"}}

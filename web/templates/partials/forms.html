@@ -31,7 +31,7 @@
       <span class="field-label">Notes</span>
       <div class="seg">
         <button class="seg-btn active" type="button" data-notes-mode="edit">Edit</button>
-        <button class="seg-btn" type="button" data-notes-mode="preview" hx-post="/notes/preview" hx-include="[data-notes]" hx-target="#notes-preview">Preview</button>
+        <button class="seg-btn" type="button" data-notes-mode="preview">Preview</button>
       </div>
     </div>
     <textarea name="notes" rows="6" autocapitalize="off" spellcheck="false" data-notes>{{.Notes}}</textarea>
