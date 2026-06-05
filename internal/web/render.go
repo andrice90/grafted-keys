@@ -38,6 +38,7 @@ func NewRenderer(assets fs.FS) (*Renderer, error) {
 		"markdown":  rd.Markdown,
 		"valueCtl":  valueCtl,
 		"dict":      dict,
+		"breakable": breakable,
 	}
 
 	base, err := template.New("").Funcs(funcs).ParseFS(assets, "templates/layout.html", "templates/partials/*.html")
@@ -114,6 +115,23 @@ func dict(kv ...any) map[string]any {
 		}
 	}
 	return m
+}
+
+// breakable escapes name and inserts <wbr> soft-wrap hints after separator
+// characters so long names wrap at segment boundaries instead of mid-word
+// (e.g. UPPER_SNAKE_CASE keys break after each underscore). <wbr> adds no
+// characters to the text, so copied or selected names are unaffected; a single
+// over-long segment still falls back to a character break via CSS overflow-wrap.
+func breakable(name string) template.HTML {
+	var b strings.Builder
+	for _, r := range name {
+		b.WriteString(template.HTMLEscapeString(string(r)))
+		switch r {
+		case '_', '-', '.', '/', ':':
+			b.WriteString("<wbr>")
+		}
+	}
+	return template.HTML(b.String())
 }
 
 // highlight escapes text and wraps case-insensitive matches of q in <mark>.

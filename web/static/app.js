@@ -98,6 +98,32 @@
     }
   });
 
+  // --- per-row action menu (small screens collapse the icon cluster into a popover) ---
+  function closeMenus(except) {
+    document.querySelectorAll('.node-actions.menu-open').forEach(function (a) {
+      if (a === except) return;
+      a.classList.remove('menu-open');
+      const b = a.querySelector('[data-menu]');
+      if (b) b.setAttribute('aria-expanded', 'false');
+    });
+  }
+  document.addEventListener('click', function (e) {
+    const toggle = e.target.closest('[data-menu]');
+    if (toggle) {
+      const actions = toggle.closest('.node-actions');
+      closeMenus(actions);
+      const open = actions.classList.toggle('menu-open');
+      toggle.setAttribute('aria-expanded', String(open));
+      return;
+    }
+    // A click on an action inside the menu still runs (htmx/copy handle it); we
+    // just dismiss the popover. Any click outside dismisses too.
+    closeMenus(null);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeMenus(null);
+  });
+
   // --- search dropdown ---
   function clearSearch() { const r = $('#search-results'); if (r) r.innerHTML = ''; }
   document.addEventListener('click', function (e) {

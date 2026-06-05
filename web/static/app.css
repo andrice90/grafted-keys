@@ -67,6 +67,13 @@ h2 { font-size: 1.1rem; margin: 0 0 .5rem; }
 h3 { font-size: 1rem; margin: 0; }
 a { color: var(--accent-text); text-decoration: none; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+/* iOS Safari auto-zooms when a focused field's text is < 16px. Force every form
+   control to 16px on touch devices to suppress that zoom (desktop keeps the
+   compact per-field sizes). !important overrides the class-scoped font-size
+   rules below regardless of their higher specificity. */
+@media (pointer: coarse) {
+  input, textarea, select { font-size: 16px !important; }
+}
 .icon-sprite { display: none; }
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
@@ -209,6 +216,10 @@ a { color: var(--accent-text); text-decoration: none; }
 .node-actions .icon { width: 16px; height: 16px; }
 .node-row:hover .node-actions, .node-row:focus-within .node-actions { opacity: 1; }
 @media (hover: none) { .node-actions { opacity: 1; } }
+/* Desktop: the menu wrapper is transparent so its buttons sit inline in the row,
+   and the single-icon toggle is hidden. The popover only exists on small screens. */
+.node-menu { display: contents; }
+.node-menu-btn { display: none; }
 .node:not(.open) > .node-children, .node:not(.open) > .node-detail { display: none; }
 /* "Empty" hint only for primary (folder) children, never the env loose list */
 .node.open > .node-children:not(.node-loose):empty::after {
@@ -221,6 +232,32 @@ a { color: var(--accent-text); text-decoration: none; }
 .secret-detail-inner { display: flex; flex-direction: column; gap: .6rem; }
 .detail-field { display: flex; flex-direction: column; gap: .25rem; }
 .detail-label { color: var(--muted); font-size: .8rem; font-weight: 500; }
+
+/* ---------- tree on small screens ---------- */
+/* Below the desktop breakpoint, names wrap onto new lines instead of being
+   clipped, and the per-row icon cluster collapses into a single toggle that
+   opens a popover. This frees the horizontal space the wrapped name needs. */
+@media (max-width: 719.98px) {
+  /* let the name take the full width and wrap rather than ellipsize */
+  .node-name { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
+  /* the toggle is always visible (no hover on touch) so the menu is reachable */
+  .node-actions { opacity: 1; }
+  .node-menu-btn { display: inline-flex; }
+  /* the buttons become a popover anchored to the toggle. It opens as a single
+     horizontal row (right-aligned, extending left) so it stays short and never
+     runs off the bottom of the viewport for rows near the page edge. */
+  .node-actions { position: relative; }
+  .node-menu {
+    display: none; position: absolute; top: calc(100% + 4px); right: 0; z-index: 30;
+    flex-direction: row; gap: .1rem; padding: .25rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); box-shadow: var(--shadow);
+  }
+  .node-actions.menu-open .node-menu { display: flex; }
+  .node-actions.menu-open .node-menu-btn { background: var(--surface-2); }
+  .node-menu .icon-btn { width: 40px; height: 40px; }
+  .node-menu .icon { width: 18px; height: 18px; }
+}
 
 /* ---------- secret value control ---------- */
 .secret-value { display: flex; align-items: center; gap: .25rem; background: var(--surface-2);
@@ -235,11 +272,17 @@ a { color: var(--accent-text); text-decoration: none; }
 .note-expand:hover { background: var(--surface); color: var(--text); }
 
 /* fullscreen notes window */
-.dialog:has(.notes-full) { width: min(96vw, 900px); }
-.notes-full { padding: 1rem 1.2rem; max-height: 85vh; overflow: auto; }
+.dialog:has(.notes-full) { width: min(96vw, 900px); overflow: hidden; }
+/* The scroll container carries no padding so the sticky header pins flush to the
+   top edge (padding here would leave a gap above it where scrolled content peeks
+   through). Scroll is vertical only; wide content wraps or scrolls internally. */
+.notes-full { max-height: 85vh; overflow-y: auto; overflow-x: hidden; }
 .notes-full-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-  position: sticky; top: 0; background: var(--surface); padding-bottom: .4rem; margin-bottom: .3rem; border-bottom: 1px solid var(--border); }
-.notes-full-head h2 { margin: 0; }
+  position: sticky; top: 0; z-index: 1; background: var(--surface);
+  padding: 1rem 1.2rem .5rem; border-bottom: 1px solid var(--border); }
+.notes-full-head h2 { margin: 0; min-width: 0; overflow-wrap: break-word; }
+.notes-full-head .icon-btn { flex: none; }
+.notes-full > .markdown { padding: .7rem 1.2rem 1.1rem; overflow-wrap: break-word; }
 
 /* ---------- dialogs + forms ---------- */
 .dialog, dialog {

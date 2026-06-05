@@ -20,14 +20,17 @@
   <div class="node-row">
     <button class="twisty" type="button" data-twisty aria-expanded="false" aria-label="Expand environment">{{template "icon" "chevron-right"}}</button>
     <span class="node-ico">{{template "icon" "box"}}</span>
-    <span class="node-name" id="name-env-{{.ID}}">{{.Name}}</span>
+    <span class="node-name" id="name-env-{{.ID}}">{{breakable .Name}}</span>
     <span class="node-actions">
-      <button class="icon-btn" type="button" hx-get="/environments/{{.ID}}/new-folder" hx-target="#dialog" aria-label="Add folder">{{template "icon" "folder-plus"}}</button>
-      <button class="icon-btn" type="button" hx-get="/environments/{{.ID}}/new-secret" hx-target="#dialog" aria-label="Add key">{{template "icon" "plus"}}</button>
-      <button class="icon-btn" type="button" hx-get="/environments/{{.ID}}/import" hx-target="#dialog" aria-label="Import .env file">{{template "icon" "upload"}}</button>
-      <button class="icon-btn" type="button" hx-get="/environments/{{.ID}}/edit" hx-target="#dialog" aria-label="Rename environment">{{template "icon" "pencil"}}</button>
-      <button class="icon-btn danger" type="button" hx-delete="/environments/{{.ID}}" hx-target="#env-{{.ID}}" hx-swap="outerHTML"
-        hx-confirm="Delete environment “{{.Name}}” and everything inside it?" aria-label="Delete environment">{{template "icon" "trash-2"}}</button>
+      <button class="icon-btn node-menu-btn" type="button" data-menu aria-haspopup="true" aria-expanded="false" aria-label="Environment actions">{{template "icon" "more-vertical"}}</button>
+      <span class="node-menu">
+        <button class="icon-btn" type="button" hx-get="/environments/{{.ID}}/new-folder" hx-target="#dialog" aria-label="Add folder">{{template "icon" "folder-plus"}}</button>
+        <button class="icon-btn" type="button" hx-get="/environments/{{.ID}}/new-secret" hx-target="#dialog" aria-label="Add key">{{template "icon" "plus"}}</button>
+        <button class="icon-btn" type="button" hx-get="/environments/{{.ID}}/import" hx-target="#dialog" aria-label="Import .env file">{{template "icon" "upload"}}</button>
+        <button class="icon-btn" type="button" hx-get="/environments/{{.ID}}/edit" hx-target="#dialog" aria-label="Rename environment">{{template "icon" "pencil"}}</button>
+        <button class="icon-btn danger" type="button" hx-delete="/environments/{{.ID}}" hx-target="#env-{{.ID}}" hx-swap="outerHTML"
+          hx-confirm="Delete environment “{{.Name}}” and everything inside it?" aria-label="Delete environment">{{template "icon" "trash-2"}}</button>
+      </span>
     </span>
   </div>
   <ul class="node-children" id="folders-env-{{.ID}}" role="group">{{range .Folders}}{{template "folderNode" .}}{{end}}</ul>
@@ -40,13 +43,16 @@
   <div class="node-row">
     <button class="twisty" type="button" data-twisty aria-expanded="false" aria-label="Expand folder">{{template "icon" "chevron-right"}}</button>
     <span class="node-ico">{{template "icon" "folder"}}</span>
-    <span class="node-name" id="name-folder-{{.ID}}">{{.Name}}</span>
+    <span class="node-name" id="name-folder-{{.ID}}">{{breakable .Name}}</span>
     <span class="node-actions">
-      <button class="icon-btn" type="button" hx-get="/folders/{{.ID}}/new-secret" hx-target="#dialog" aria-label="Add key">{{template "icon" "plus"}}</button>
-      <button class="icon-btn" type="button" hx-get="/folders/{{.ID}}/import" hx-target="#dialog" aria-label="Import .env file">{{template "icon" "upload"}}</button>
-      <button class="icon-btn" type="button" hx-get="/folders/{{.ID}}/edit" hx-target="#dialog" aria-label="Rename folder">{{template "icon" "pencil"}}</button>
-      <button class="icon-btn danger" type="button" hx-delete="/folders/{{.ID}}" hx-target="#folder-{{.ID}}" hx-swap="outerHTML"
-        hx-confirm="Delete folder “{{.Name}}” and its keys?" aria-label="Delete folder">{{template "icon" "trash-2"}}</button>
+      <button class="icon-btn node-menu-btn" type="button" data-menu aria-haspopup="true" aria-expanded="false" aria-label="Folder actions">{{template "icon" "more-vertical"}}</button>
+      <span class="node-menu">
+        <button class="icon-btn" type="button" hx-get="/folders/{{.ID}}/new-secret" hx-target="#dialog" aria-label="Add key">{{template "icon" "plus"}}</button>
+        <button class="icon-btn" type="button" hx-get="/folders/{{.ID}}/import" hx-target="#dialog" aria-label="Import .env file">{{template "icon" "upload"}}</button>
+        <button class="icon-btn" type="button" hx-get="/folders/{{.ID}}/edit" hx-target="#dialog" aria-label="Rename folder">{{template "icon" "pencil"}}</button>
+        <button class="icon-btn danger" type="button" hx-delete="/folders/{{.ID}}" hx-target="#folder-{{.ID}}" hx-swap="outerHTML"
+          hx-confirm="Delete folder “{{.Name}}” and its keys?" aria-label="Delete folder">{{template "icon" "trash-2"}}</button>
+      </span>
     </span>
   </div>
   <ul class="node-children" id="secrets-folder-{{.ID}}" role="group">{{range .Secrets}}{{template "secretNode" .}}{{end}}</ul>
@@ -59,12 +65,15 @@
     <button class="twisty" type="button" data-twisty aria-expanded="false"
       hx-get="/secrets/{{.ID}}/detail" hx-target="#detail-{{.ID}}" hx-trigger="click once" hx-swap="innerHTML" aria-label="Expand key">{{template "icon" "chevron-right"}}</button>
     <span class="node-ico">{{template "icon" "key-round"}}</span>
-    <span class="node-name" id="name-secret-{{.ID}}">{{.Name}}{{if .HasNotes}} <span class="note-dot" aria-label="has notes">{{template "icon" "file-text"}}</span>{{end}}</span>
+    <span class="node-name" id="name-secret-{{.ID}}">{{breakable .Name}}{{if .HasNotes}} <span class="note-dot" aria-label="has notes">{{template "icon" "file-text"}}</span>{{end}}</span>
     <span class="node-actions">
-      <button class="icon-btn copy" type="button" data-copy="/secrets/{{.ID}}/copy" aria-label="Copy value">{{template "icon" "copy"}}</button>
-      <button class="icon-btn" type="button" hx-get="/secrets/{{.ID}}/edit" hx-target="#dialog" aria-label="Edit key">{{template "icon" "pencil"}}</button>
-      <button class="icon-btn danger" type="button" hx-delete="/secrets/{{.ID}}" hx-target="#secret-{{.ID}}" hx-swap="outerHTML"
-        hx-confirm="Delete key “{{.Name}}”? This cannot be undone." aria-label="Delete key">{{template "icon" "trash-2"}}</button>
+      <button class="icon-btn node-menu-btn" type="button" data-menu aria-haspopup="true" aria-expanded="false" aria-label="Key actions">{{template "icon" "more-vertical"}}</button>
+      <span class="node-menu">
+        <button class="icon-btn copy" type="button" data-copy="/secrets/{{.ID}}/copy" aria-label="Copy value">{{template "icon" "copy"}}</button>
+        <button class="icon-btn" type="button" hx-get="/secrets/{{.ID}}/edit" hx-target="#dialog" aria-label="Edit key">{{template "icon" "pencil"}}</button>
+        <button class="icon-btn danger" type="button" hx-delete="/secrets/{{.ID}}" hx-target="#secret-{{.ID}}" hx-swap="outerHTML"
+          hx-confirm="Delete key “{{.Name}}”? This cannot be undone." aria-label="Delete key">{{template "icon" "trash-2"}}</button>
+      </span>
     </span>
   </div>
   <div class="node-detail" id="detail-{{.ID}}"></div>
@@ -87,7 +96,7 @@
   </div>
   {{end}}
 </div>
-{{if .Name}}<span class="node-name" id="name-secret-{{.ID}}" hx-swap-oob="innerHTML">{{.Name}}{{if .HasNotes}} <span class="note-dot" aria-label="has notes">{{template "icon" "file-text"}}</span>{{end}}</span>{{end}}
+{{if .Name}}<span class="node-name" id="name-secret-{{.ID}}" hx-swap-oob="innerHTML">{{breakable .Name}}{{if .HasNotes}} <span class="note-dot" aria-label="has notes">{{template "icon" "file-text"}}</span>{{end}}</span>{{end}}
 {{end}}
 
 {{define "secretValue"}}
@@ -103,7 +112,7 @@
 </div>
 {{end}}
 
-{{define "nodeName"}}<span class="node-name" id="name-{{.Type}}-{{.ID}}">{{.Name}}</span>{{end}}
+{{define "nodeName"}}<span class="node-name" id="name-{{.Type}}-{{.ID}}">{{breakable .Name}}</span>{{end}}
 
 {{define "secretNodes"}}{{range .}}{{template "secretNode" .}}{{end}}{{end}}
 
