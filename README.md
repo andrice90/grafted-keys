@@ -4,14 +4,14 @@ A minimal, security-hardened, **zero-knowledge** secrets manager and backup
 service you can self-host. One small Go binary, embedded UI, SQLite storage.
 Designed to sit on a LAN and, if you want, behind a reverse proxy.
 
-- **Zero-knowledge** — your master passphrase derives the encryption key
+- **Zero-knowledge** - your master passphrase derives the encryption key
   (Argon2id). The server stores only ciphertext and never persists the key.
-- **Tiny** — ~15–25 MB image on distroless, ~10–15 MB idle RAM.
-- **Hardened** — strict CSP, CSRF, rate-limited login, optional TOTP, AAD-bound
+- **Tiny** - ~15–25 MB image on distroless, ~10–15 MB idle RAM.
+- **Hardened** - strict CSP, CSRF, rate-limited login, optional TOTP, AAD-bound
   AES-256-GCM, read-only rootfs, non-root, dropped capabilities.
-- **Organised** — Project → Environment → Folder → Secret (name, value,
+- **Organised** - Project → Environment → Folder → Secret (name, value,
   markdown notes), global search, dark/light, mobile-first UI.
-- **Backups** — scheduled encrypted SQLite snapshots with retention.
+- **Backups** - scheduled encrypted SQLite snapshots with retention.
 
 > ⚠️ Zero-knowledge means **there is no passphrase recovery**. If you lose your
 > master passphrase, the data is unrecoverable. Keep backups and remember it.
@@ -34,7 +34,7 @@ them first: `sudo chown -R 65532:65532 ./data ./backups`.
 ### Plain-HTTP LAN (no TLS)
 
 The session cookie is `Secure` by default (required for the `__Host-` prefix).
-For a trusted LAN without TLS, set `GRAFTED_SECURE_COOKIE=0` — this drops the
+For a trusted LAN without TLS, set `GRAFTED_SECURE_COOKIE=0` - this drops the
 cookie prefix and `SameSite` hardening, so only do it on a trusted network.
 
 ## Local development
@@ -45,7 +45,7 @@ make test       # unit tests
 make build      # static binary -> ./grafted
 ```
 
-Go 1.25+. No Node/JS build step — htmx is vendored and CSS/JS are hand-authored.
+Go 1.25+. No Node/JS build step - htmx is vendored and CSS/JS are hand-authored.
 
 ## Configuration (environment)
 
@@ -81,7 +81,7 @@ while unlocked and is zeroized on lock/idle.
 
 **Out of scope:** a fully compromised host while the vault is unlocked (the key
 is necessarily in RAM then), and passphrase recovery. TOTP is an online gate,
-not cryptographic 2FA — the passphrase alone decrypts data at rest.
+not cryptographic 2FA - the passphrase alone decrypts data at rest.
 
 ### Known v1 limitations
 
