@@ -25,6 +25,7 @@
   --icon-btn: 34px;
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --surface-code: #d8dce6;
 }
 [data-theme="dark"] {
   --bg: #0e1117;
@@ -40,6 +41,7 @@
   --ok: #4cc38a;
   --mark: #5b4d12;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.35);
+  --surface-code: #161b23;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -47,6 +49,7 @@
     --muted: #9aa7b8; --border: #2a323f; --accent: #3f6fe6; --accent-text: #84a8ff;
     --on-accent: #fff; --danger: #e06a5d; --ok: #4cc38a; --mark: #5b4d12;
     --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.35);
+    --surface-code: #161b23;
   }
 }
 
@@ -287,6 +290,10 @@ dialog::backdrop { background: rgba(8, 12, 20, 0.5); }
 .markdown pre { background: var(--surface-2); padding: .6rem .8rem; border-radius: var(--radius-sm); overflow-x: auto; }
 .markdown code { font-family: var(--mono); font-size: .85em; }
 .markdown a { text-decoration: underline; }
+/* Inside the note card the pre/code background must be darker than the card itself */
+.note-card .markdown pre,
+.note-card .markdown :not(pre) > code { background: var(--surface-code); }
+.note-card .markdown :not(pre) > code { padding: .15em .35em; border-radius: 3px; }
 mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 .1em; }
 
 /* ---------- htmx + motion ---------- */
