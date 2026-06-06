@@ -17,3 +17,8 @@
 .env.*
 .DS_Store
 .claude/
+/.pi
+./tmp
+.air.toml
+.tmp/
+tmp/

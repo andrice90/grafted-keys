@@ -47,6 +47,20 @@
     } catch (_) { announce('Copy failed'); }
   }
 
+  // --- code block copy buttons ---
+  function initCodeCopy(root) {
+    (root || document).querySelectorAll('.markdown pre').forEach(function (pre) {
+      if (pre.querySelector('.code-copy-btn')) return;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'icon-btn code-copy-btn';
+      btn.setAttribute('aria-label', 'Copy code');
+      btn.setAttribute('data-copy-code', '');
+      btn.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#i-copy"></use></svg>';
+      pre.appendChild(btn);
+    });
+  }
+
   // --- theme: cycle system -> light -> dark, persisted in a cookie ---
   function setTheme(v) {
     document.documentElement.dataset.theme = v;
@@ -153,7 +167,7 @@
 
   // --- click delegation ---
   document.addEventListener('click', function (e) {
-    const t = e.target.closest('[data-open],[data-close],[data-copy],[data-toggle-input],[data-theme-toggle],[data-focus-search],[data-notes-mode]');
+    const t = e.target.closest('[data-open],[data-close],[data-copy],[data-copy-code],[data-toggle-input],[data-theme-toggle],[data-focus-search],[data-notes-mode]');
     if (!t) return;
 
     if (t.hasAttribute('data-theme-toggle')) { toggleTheme(); return; }
@@ -195,6 +209,13 @@
       return;
     }
     if (t.dataset.copy) { copyFrom(t.dataset.copy); return; }
+    if (t.hasAttribute('data-copy-code')) {
+      const pre = t.closest('pre');
+      const code = pre && pre.querySelector('code');
+      const text = (code || pre) ? (code || pre).textContent : '';
+      copyText(text.replace(/\n$/, '')).then(function (ok) { announce(ok ? 'Copied' : 'Copy failed'); });
+      return;
+    }
 
     if (t.hasAttribute('data-toggle-input')) {
       const input = t.parentElement.querySelector('[data-secret-input]');
@@ -231,6 +252,7 @@
   document.addEventListener('htmx:afterSwap', function (e) {
     const target = e.detail.target;
     if (!target) return;
+    initCodeCopy(target);
 
     // A form/detail fragment was loaded into the shared dialog: open it.
     if (target.id === 'dialog') {
@@ -262,6 +284,7 @@
   // Initial full-page load straight to /projects/{id}?key={id} (e.g. a bookmarked
   // or non-htmx search result).
   focusFromURL();
+  initCodeCopy(document);
 
   document.addEventListener('htmx:responseError', function () {
     announce('Something went wrong. Please try again.');
