@@ -49,9 +49,7 @@
     <label class="check"><input type="checkbox" name="enabled" value="1" {{if .BackupEnabled}}checked{{end}}> Run a scheduled daily backup</label>
     <label>Time of day (24-hour) <input name="at" type="time" value="{{.BackupAt}}"></label>
     <label>Keep most recent <input name="keep" type="number" min="1" step="1" value="{{.BackupKeep}}" required></label>
-    <menu class="form-actions"><button class="btn primary" type="submit">Save backup settings</button></menu>
-  </form>
-  <form hx-post="/settings/backup" hx-target="#main"><button class="btn" type="submit">Back up now</button></form>
+    <menu class="form-actions"><button class="btn primary" type="submit">Save backup settings</button><button class="btn" type="submit" hx-post="/settings/backup" hx-target="#main">Back up now</button></menu>
 </section>
 
 <section class="card setting">
@@ -105,10 +103,9 @@
       <label class="radio"><input type="radio" name="source" value="upload" {{if not .Backups}}checked{{end}}> Upload a backup file</label>
       <label>File <input type="file" name="file" accept=".db"></label>
     </fieldset>
-    <label>Type <code>restore backup</code> to confirm
-      <input name="confirm" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="restore backup" required>
-    </label>
-    <menu class="form-actions"><button class="btn danger" type="submit">Restore backup</button></menu>
+<p>Type <span class="confirm-keyword">restore backup</span> to confirm</p>
+<label><input name="confirm" type="text" required></label>
+<menu class="form-actions"><button class="btn danger" type="submit">Restore backup</button></menu>
   </form>
 </section>
 {{end}}
