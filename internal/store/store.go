@@ -195,6 +195,23 @@ var migrations = []string{
 		value      TEXT NOT NULL,
 		updated_at INTEGER NOT NULL
 	);`,
+
+	// File attachments hung off a secret. The filename and the file bytes are
+	// both ciphertext BLOBs (AES-256-GCM under the DEK, role-bound AAD) exactly
+	// like every other user field; only the structural id/FK, plaintext byte
+	// size, sort and timestamp are clear. Cascade-deletes with the secret, and is
+	// carried by VACUUM-INTO backups and the rekey re-encryption like all other
+	// ciphertext.
+	`CREATE TABLE attachments (
+		id         TEXT PRIMARY KEY,
+		secret_id  TEXT NOT NULL REFERENCES secrets(id) ON DELETE CASCADE,
+		name_enc   BLOB NOT NULL,
+		data_enc   BLOB NOT NULL,
+		size       INTEGER NOT NULL,
+		sort       INTEGER NOT NULL DEFAULT 0,
+		created_at INTEGER NOT NULL
+	);
+	CREATE INDEX idx_attach_secret ON attachments(secret_id);`,
 }
 
 func (db *DB) migrate() error {

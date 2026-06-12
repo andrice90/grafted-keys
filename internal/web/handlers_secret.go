@@ -40,10 +40,11 @@ type secretFormView struct {
 }
 
 type secretDetailView struct {
-	ID       string
-	Name     string
-	HasNotes bool
-	Notes    string
+	ID          string
+	Name        string
+	HasNotes    bool
+	Notes       string
+	Attachments []vault.AttachmentMeta
 }
 
 type notesFullView struct {
@@ -112,7 +113,8 @@ func (s *Server) updateSecret(w http.ResponseWriter, r *http.Request, sess *auth
 		s.fail(w, err)
 		return
 	}
-	s.rd.Frag(w, "secretDetail", secretDetailView{ID: id, Name: name, HasNotes: notes != "", Notes: notes})
+	atts, _ := s.vault.Attachments(dek, id)
+	s.rd.Frag(w, "secretDetail", secretDetailView{ID: id, Name: name, HasNotes: notes != "", Notes: notes, Attachments: atts})
 }
 
 func (s *Server) deleteSecret(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
@@ -130,7 +132,12 @@ func (s *Server) secretDetail(w http.ResponseWriter, r *http.Request, sess *auth
 		s.fail(w, err)
 		return
 	}
-	s.rd.Frag(w, "secretDetail", secretDetailView{ID: full.ID, Name: full.Name, HasNotes: full.Notes != "", Notes: full.Notes})
+	atts, err := s.vault.Attachments(dek, full.ID)
+	if err != nil {
+		s.fail(w, err)
+		return
+	}
+	s.rd.Frag(w, "secretDetail", secretDetailView{ID: full.ID, Name: full.Name, HasNotes: full.Notes != "", Notes: full.Notes, Attachments: atts})
 }
 
 // secretNotes returns the full rendered notes for the fullscreen dialog.

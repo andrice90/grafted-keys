@@ -95,8 +95,35 @@
     </div>
   </div>
   {{end}}
+  <div class="detail-field">
+    <div class="detail-label-row">
+      <span class="detail-label">Attachments</span>
+      <button class="btn tiny" type="button" hx-get="/secrets/{{.ID}}/attach" hx-target="#dialog" aria-label="Add attachment">{{template "icon" "paperclip"}} Add file</button>
+    </div>
+    <div class="attach" id="attach-{{.ID}}">{{template "attachList" (dict "SecretID" .ID "Items" .Attachments)}}</div>
+  </div>
 </div>
 {{if .Name}}<span class="node-name" id="name-secret-{{.ID}}" hx-swap-oob="innerHTML">{{breakable .Name}}{{if .HasNotes}} <span class="note-dot" aria-label="has notes">{{template "icon" "file-text"}}</span>{{end}}</span>{{end}}
+{{end}}
+
+{{define "attachList"}}
+{{if .Items}}
+<ul class="attach-list">
+  {{range .Items}}
+  <li class="attach-item" id="attach-item-{{.ID}}">
+    <a class="attach-link" href="/attachments/{{.ID}}/download" download>
+      <span class="attach-ico">{{template "icon" "download"}}</span>
+      <span class="attach-name">{{breakable .Name}}</span>
+      <span class="attach-size">{{humansize .Size}}</span>
+    </a>
+    <button class="icon-btn danger" type="button" hx-delete="/attachments/{{.ID}}" hx-target="#attach-{{$.SecretID}}" hx-swap="innerHTML"
+      hx-confirm="Delete attachment “{{.Name}}”? This cannot be undone." aria-label="Delete attachment">{{template "icon" "trash-2"}}</button>
+  </li>
+  {{end}}
+</ul>
+{{else}}
+<p class="attach-none hint">No files attached.</p>
+{{end}}
 {{end}}
 
 {{define "secretValue"}}

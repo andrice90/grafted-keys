@@ -39,6 +39,7 @@ func NewRenderer(assets fs.FS) (*Renderer, error) {
 		"valueCtl":  valueCtl,
 		"dict":      dict,
 		"breakable": breakable,
+		"humansize": humanSize,
 	}
 
 	base, err := template.New("").Funcs(funcs).ParseFS(assets, "templates/layout.html", "templates/partials/*.html")

@@ -39,6 +39,18 @@ type Secret struct {
 	UpdatedAt     int64
 }
 
+// Attachment is a file hung off a secret. NameEnc/DataEnc are ciphertext; Size
+// is the plaintext byte length kept clear for display (the ciphertext length
+// already reveals it within GCM's fixed overhead).
+type Attachment struct {
+	ID        string
+	SecretID  string
+	NameEnc   []byte
+	DataEnc   []byte
+	Size      int64
+	CreatedAt int64
+}
+
 // SecretWithPath carries a secret plus its encrypted ancestor names, for search.
 // FolderID/FolderName are empty for environment-level (uncategorized) secrets.
 type SecretWithPath struct {
@@ -275,6 +287,70 @@ func (db *DB) AllSecretsWithPath() ([]SecretWithPath, error) {
 		out = append(out, r)
 	}
 	return out, rows.Err()
+}
+
+// ---- attachments ----
+
+func (db *DB) CreateAttachment(a Attachment) error {
+	t := now()
+	_, err := db.sql.Exec(`INSERT INTO attachments (id, secret_id, name_enc, data_enc, size, created_at)
+		VALUES (?,?,?,?,?,?)`, a.ID, a.SecretID, a.NameEnc, a.DataEnc, a.Size, t)
+	return err
+}
+
+// ListAttachments returns attachment metadata for a secret. It deliberately does
+// NOT select data_enc, so listing a key never loads file bytes into memory - the
+// payload is fetched only on an explicit download (download-on-demand), mirroring
+// reveal-on-demand for secret values.
+func (db *DB) ListAttachments(secretID string) ([]Attachment, error) {
+	rows, err := db.sql.Query(`SELECT id, secret_id, name_enc, size, created_at
+		FROM attachments WHERE secret_id=? ORDER BY sort, created_at`, secretID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []Attachment
+	for rows.Next() {
+		var a Attachment
+		if err := rows.Scan(&a.ID, &a.SecretID, &a.NameEnc, &a.Size, &a.CreatedAt); err != nil {
+			return nil, err
+		}
+		out = append(out, a)
+	}
+	return out, rows.Err()
+}
+
+// GetAttachment loads a single attachment including its (ciphertext) data, for
+// the download path.
+func (db *DB) GetAttachment(id string) (Attachment, error) {
+	var a Attachment
+	err := db.sql.QueryRow(`SELECT id, secret_id, name_enc, data_enc, size, created_at
+		FROM attachments WHERE id=?`, id).
+		Scan(&a.ID, &a.SecretID, &a.NameEnc, &a.DataEnc, &a.Size, &a.CreatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return a, ErrNotFound
+	}
+	return a, err
+}
+
+func (db *DB) DeleteAttachment(id string) error {
+	return db.exec1(`DELETE FROM attachments WHERE id=?`, id)
+}
+
+// AttachmentSecretID returns the owning secret id without loading the payload.
+func (db *DB) AttachmentSecretID(id string) (string, error) {
+	var sid string
+	err := db.sql.QueryRow(`SELECT secret_id FROM attachments WHERE id=?`, id).Scan(&sid)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", ErrNotFound
+	}
+	return sid, err
+}
+
+func (db *DB) CountAttachments(secretID string) (int, error) {
+	var n int
+	err := db.sql.QueryRow(`SELECT COUNT(*) FROM attachments WHERE secret_id=?`, secretID).Scan(&n)
+	return n, err
 }
 
 // ---- cascade counts (for delete confirmations) ----

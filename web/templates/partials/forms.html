@@ -61,6 +61,21 @@
 </form>
 {{end}}
 
+{{define "attachForm"}}
+<form class="form" hx-post="/secrets/{{.SecretID}}/attachments" hx-target="#attach-{{.SecretID}}" hx-swap="innerHTML"
+  hx-encoding="multipart/form-data">
+  <h2>Attach a file</h2>
+  <p class="hint">The file name and contents are encrypted under your master key, just like every other field. Max {{.MaxMB}} MB per file.</p>
+  <label>File
+    <input type="file" name="file" required>
+  </label>
+  <menu class="form-actions">
+    <button class="btn" type="button" data-close>Cancel</button>
+    <button class="btn primary" type="submit">Upload</button>
+  </menu>
+</form>
+{{end}}
+
 {{define "notesFull"}}
 <div class="notes-full">
   <div class="notes-full-head">
