@@ -12,6 +12,7 @@ var encryptedColumns = []struct {
 	{"environments", []string{"name_enc"}},
 	{"folders", []string{"name_enc"}},
 	{"secrets", []string{"name_enc", "value_enc", "notes_enc"}},
+	{"attachments", []string{"name_enc", "data_enc"}},
 }
 
 // RekeyTx re-encrypts every field and writes the new wrapped DEK in a single

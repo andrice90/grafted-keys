@@ -350,6 +350,20 @@ dialog::backdrop { background: rgba(8, 12, 20, 0.5); }
 .kv span { color: var(--muted); min-width: 2.5rem; }
 .totp-secret, .totp-uri { font-family: var(--mono); font-size: .8rem; word-break: break-all; background: var(--surface-2); padding: .2rem .4rem; border-radius: 6px; }
 
+/* ---------- attachments ---------- */
+.btn.tiny { height: 28px; padding: 0 .55rem; font-size: .78rem; }
+.btn.tiny .icon { width: 14px; height: 14px; }
+.detail-label-row { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.attach-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .25rem; }
+.attach-item { display: flex; align-items: center; gap: .25rem; }
+.attach-link { display: flex; align-items: center; gap: .5rem; flex: 1; min-width: 0; padding: .4rem .55rem; color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); }
+.attach-link:hover { background: var(--surface-2); border-color: var(--muted); }
+.attach-ico { display: inline-flex; color: var(--accent-text); flex: none; }
+.attach-name { font-size: .85rem; overflow-wrap: anywhere; flex: 1; min-width: 0; }
+.attach-size { color: var(--muted); font-size: .75rem; flex: none; white-space: nowrap; }
+.attach-none { margin: 0; }
+
 /* ---------- markdown ---------- */
 .markdown p, .markdown ul, .markdown ol, .markdown blockquote { margin: .6em 0; }
 .markdown h1, .markdown h2, .markdown h3, .markdown h4 { margin: .8em 0 .35em; font-size: 1em; font-weight: 600; }

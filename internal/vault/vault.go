@@ -158,9 +158,11 @@ func (s *Service) ChangePassphrase(dek, newPassphrase []byte) error {
 var tableEntity = map[string]string{
 	"projects": "project", "environments": "environment",
 	"folders": "folder", "secrets": "secret", "vault": "vault",
+	"attachments": "attachment",
 }
 var columnField = map[string]string{
 	"name_enc": "name", "value_enc": "value", "notes_enc": "notes", "totp_enc": "totp",
+	"data_enc": "data",
 }
 
 // Rekey rotates the data key: it re-encrypts every field under a new DEK and

@@ -135,6 +135,14 @@ func (s *Server) routes() {
 	mux.HandleFunc("GET /secrets/{id}/copy", s.needDEK(s.copySecret))
 	mux.HandleFunc("POST /notes/preview", s.needDEK(s.previewNotes))
 
+	// Attachments (files hung off a key). Upload/download/delete are all gated by
+	// an unlocked vault; download is a GET (no CSRF) like reveal/copy, mutations
+	// carry the synchronizer token.
+	mux.HandleFunc("GET /secrets/{id}/attach", s.needDEK(s.attachForm))
+	mux.HandleFunc("POST /secrets/{id}/attachments", s.needDEK(s.uploadAttachment))
+	mux.HandleFunc("GET /attachments/{id}/download", s.needDEK(s.downloadAttachment))
+	mux.HandleFunc("DELETE /attachments/{id}", s.needDEK(s.deleteAttachment))
+
 	// Settings (gated).
 	mux.HandleFunc("GET /settings", s.needDEK(s.settings))
 	mux.HandleFunc("POST /settings/passphrase", s.needDEK(s.changePassphrase))

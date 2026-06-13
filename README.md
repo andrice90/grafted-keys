@@ -10,7 +10,10 @@ Designed to sit on a LAN and, if you want, behind a reverse proxy.
 - **Hardened** - strict CSP, CSRF, rate-limited login, optional TOTP, AAD-bound
   AES-256-GCM, read-only rootfs, non-root, dropped capabilities.
 - **Organised** - Project → Environment → Folder → Secret (name, value,
-  markdown notes), global search, dark/light, mobile-first UI.
+  markdown notes, file attachments), global search, dark/light, mobile-first UI.
+- **Attachments** - hang files off any key; the filename and bytes are encrypted
+  under your master key like every other field, included in backups and re-keyed
+  with the rest, and downloaded on demand as a forced (never inline) download.
 - **Backups** - scheduled encrypted SQLite snapshots with retention, plus
   in-app download and a guarded restore. Schedule, retention, and session
   timeouts are editable live in Settings (no restart).

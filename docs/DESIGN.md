@@ -36,6 +36,12 @@ SQLite tables (pure-Go `modernc.org/sqlite`, CGO-free → static binary):
 - `environments(id, project_id, name_enc, sort, …)`
 - `folders(id, environment_id, name_enc, sort, …)`
 - `secrets(id, folder_id, name_enc, value_enc, notes_enc, sort, …)`
+- `attachments(id, secret_id, name_enc, data_enc, size, sort, created_at)` - files
+  hung off a secret; the **filename and the file bytes are both ciphertext** under
+  the DEK (role-bound AAD), exactly like every other field. Only the structural
+  id/FK, the plaintext byte `size`, sort and timestamp are clear. Cascade-deletes
+  with its secret; carried by `VACUUM INTO` backups and re-keyed by DEK rotation
+  with no special-casing (it is just more ciphertext in the same database).
 
 Pragmas: `journal_mode=WAL`, `foreign_keys=ON`, `busy_timeout=5000`,
 `synchronous=NORMAL`. Cascade deletes via FKs.
@@ -202,6 +208,15 @@ These supersede/clarify the sections above after the adversarial design review.
   applied by one global middleware to **every** response (errors, partials, healthz);
   only hashed `/static/*` gets long immutable cache.
 - HSTS off by default; enabled only via `GRAFTED_HSTS=1` (set only behind HTTPS).
+- **Attachment download/upload**: uploads are size-capped (5 MiB/file, enforced by
+  `MaxBytesReader` + a `LimitReader`) and gated by an unlocked session + CSRF token.
+  Listing a key never loads file bytes (download-on-demand, like reveal-on-demand
+  for values); the payload is decrypted only on an explicit download. Downloads are
+  always served as `application/octet-stream` with `Content-Disposition: attachment`
+  (an injection-safe, RFC 5987-encoded filename) so uploaded content can never be
+  rendered inline in the app origin; `nosniff` + same-origin CORP + `no-store` apply.
+  Files are addressed by opaque random id (in the DB, never a filesystem path), so
+  there is no path-traversal surface.
 
 **UX / a11y**
 - Navigation: desktop = tree sidebar + content; mobile = **drill-down** with a
