@@ -33,7 +33,7 @@ func TestSnapshotCarriesEncryptedAttachment(t *testing.T) {
 	fid, _ := v.CreateFolder(dek, eid, "files")
 	sid, _ := v.CreateSecret(dek, fid, "K", "v", "")
 	payload := []byte("\x00secret-attachment-bytes\xff")
-	attID, err := v.AddAttachment(dek, sid, "kp.kdbx", payload)
+	attID, err := v.AddAttachment(dek, sid, "kp.kdbx", "", payload)
 	if err != nil {
 		t.Fatal(err)
 	}

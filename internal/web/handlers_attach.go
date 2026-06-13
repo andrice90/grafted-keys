@@ -64,7 +64,8 @@ func (s *Server) uploadAttachment(w http.ResponseWriter, r *http.Request, sess *
 	}
 
 	name := sanitizeFilename(hdr.Filename)
-	if _, err := s.vault.AddAttachment(dek, secretID, name, data); err != nil {
+	displayName := strings.TrimSpace(r.FormValue("display_name"))
+	if _, err := s.vault.AddAttachment(dek, secretID, name, displayName, data); err != nil {
 		s.fail(w, err)
 		return
 	}
@@ -173,4 +174,37 @@ func rfc5987Escape(s string) string {
 		b.WriteByte(upperhex[c&0x0f])
 	}
 	return b.String()
+}
+
+func (s *Server) attachEditInlineForm(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
+	id := r.PathValue("id")
+	meta, err := s.vault.AttachmentMeta(dek, id)
+	if err != nil {
+		s.fail(w, err)
+		return
+	}
+	s.rd.Frag(w, "attachEditForm", meta)
+}
+
+func (s *Server) updateAttachmentInline(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
+	id := r.PathValue("id")
+	displayName := strings.TrimSpace(r.FormValue("display_name"))
+	if err := s.vault.UpdateAttachmentDisplayName(dek, id, displayName); err != nil {
+		s.fail(w, err)
+		return
+	}
+	s.renderAttachmentRow(w, r, sess, dek)
+}
+
+func (s *Server) renderAttachmentRow(w http.ResponseWriter, r *http.Request, sess *auth.Session, dek []byte) {
+	id := r.PathValue("id")
+	meta, err := s.vault.AttachmentMeta(dek, id)
+	if err != nil {
+		s.fail(w, err)
+		return
+	}
+	s.rd.Frag(w, "attachItem", map[string]any{
+		"Item":     meta,
+		"SecretID": meta.SecretID,
+	})
 }

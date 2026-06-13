@@ -43,12 +43,13 @@ type Secret struct {
 // is the plaintext byte length kept clear for display (the ciphertext length
 // already reveals it within GCM's fixed overhead).
 type Attachment struct {
-	ID        string
-	SecretID  string
-	NameEnc   []byte
-	DataEnc   []byte
-	Size      int64
-	CreatedAt int64
+	ID             string
+	SecretID       string
+	NameEnc        []byte
+	DisplayNameEnc []byte
+	DataEnc        []byte
+	Size           int64
+	CreatedAt      int64
 }
 
 // SecretWithPath carries a secret plus its encrypted ancestor names, for search.
@@ -293,8 +294,8 @@ func (db *DB) AllSecretsWithPath() ([]SecretWithPath, error) {
 
 func (db *DB) CreateAttachment(a Attachment) error {
 	t := now()
-	_, err := db.sql.Exec(`INSERT INTO attachments (id, secret_id, name_enc, data_enc, size, created_at)
-		VALUES (?,?,?,?,?,?)`, a.ID, a.SecretID, a.NameEnc, a.DataEnc, a.Size, t)
+	_, err := db.sql.Exec(`INSERT INTO attachments (id, secret_id, name_enc, data_enc, size, created_at, display_name_enc)
+		VALUES (?,?,?,?,?,?,?)`, a.ID, a.SecretID, a.NameEnc, a.DataEnc, a.Size, t, a.DisplayNameEnc)
 	return err
 }
 
@@ -303,7 +304,7 @@ func (db *DB) CreateAttachment(a Attachment) error {
 // payload is fetched only on an explicit download (download-on-demand), mirroring
 // reveal-on-demand for secret values.
 func (db *DB) ListAttachments(secretID string) ([]Attachment, error) {
-	rows, err := db.sql.Query(`SELECT id, secret_id, name_enc, size, created_at
+	rows, err := db.sql.Query(`SELECT id, secret_id, name_enc, size, created_at, display_name_enc
 		FROM attachments WHERE secret_id=? ORDER BY sort, created_at`, secretID)
 	if err != nil {
 		return nil, err
@@ -312,7 +313,7 @@ func (db *DB) ListAttachments(secretID string) ([]Attachment, error) {
 	var out []Attachment
 	for rows.Next() {
 		var a Attachment
-		if err := rows.Scan(&a.ID, &a.SecretID, &a.NameEnc, &a.Size, &a.CreatedAt); err != nil {
+		if err := rows.Scan(&a.ID, &a.SecretID, &a.NameEnc, &a.Size, &a.CreatedAt, &a.DisplayNameEnc); err != nil {
 			return nil, err
 		}
 		out = append(out, a)
@@ -324,9 +325,9 @@ func (db *DB) ListAttachments(secretID string) ([]Attachment, error) {
 // the download path.
 func (db *DB) GetAttachment(id string) (Attachment, error) {
 	var a Attachment
-	err := db.sql.QueryRow(`SELECT id, secret_id, name_enc, data_enc, size, created_at
+	err := db.sql.QueryRow(`SELECT id, secret_id, name_enc, data_enc, size, created_at, display_name_enc
 		FROM attachments WHERE id=?`, id).
-		Scan(&a.ID, &a.SecretID, &a.NameEnc, &a.DataEnc, &a.Size, &a.CreatedAt)
+		Scan(&a.ID, &a.SecretID, &a.NameEnc, &a.DataEnc, &a.Size, &a.CreatedAt, &a.DisplayNameEnc)
 	if errors.Is(err, sql.ErrNoRows) {
 		return a, ErrNotFound
 	}
@@ -335,6 +336,10 @@ func (db *DB) GetAttachment(id string) (Attachment, error) {
 
 func (db *DB) DeleteAttachment(id string) error {
 	return db.exec1(`DELETE FROM attachments WHERE id=?`, id)
+}
+
+func (db *DB) UpdateAttachmentDisplayName(id string, displayNameEnc []byte) error {
+	return db.exec1(`UPDATE attachments SET display_name_enc=? WHERE id=?`, displayNameEnc, id)
 }
 
 // AttachmentSecretID returns the owning secret id without loading the payload.

@@ -27,6 +27,61 @@ func TestSecretDetailRendersAttachments(t *testing.T) {
 	}
 }
 
+func TestSecretDetailRendersAttachmentsWithDisplayName(t *testing.T) {
+	rd := newTestRenderer(t)
+	rec := httptest.NewRecorder()
+	rd.Frag(rec, "secretDetail", secretDetailView{
+		ID: "S1", Name: "K",
+		Attachments: []vault.AttachmentMeta{{ID: "A1", SecretID: "S1", Name: "actualfile", DisplayName: "Friendly Display Name", Size: 2048}},
+	})
+	body := rec.Body.String()
+	if !strings.Contains(body, "Friendly Display Name") {
+		t.Error("display name missing")
+	}
+	if !strings.Contains(body, "actualfile") {
+		t.Error("filename missing")
+	}
+}
+
+func TestAttachEditFormTemplate(t *testing.T) {
+	rd := newTestRenderer(t)
+	rec := httptest.NewRecorder()
+	rd.Frag(rec, "attachEditForm", vault.AttachmentMeta{
+		ID: "A1", SecretID: "S1", Name: "actualfile", DisplayName: "Current Display Name", Size: 2048,
+	})
+	body := rec.Body.String()
+	if !strings.Contains(body, "Current Display Name") {
+		t.Error("display name input value missing")
+	}
+	if !strings.Contains(body, `hx-post="/attachments/A1/edit-inline"`) {
+		t.Error("post route missing")
+	}
+	if !strings.Contains(body, `hx-get="/attachments/A1/row"`) {
+		t.Error("cancel route missing")
+	}
+}
+
+func TestAttachItemTemplate(t *testing.T) {
+	rd := newTestRenderer(t)
+	rec := httptest.NewRecorder()
+	rd.Frag(rec, "attachItem", map[string]any{
+		"Item": vault.AttachmentMeta{
+			ID: "A1", SecretID: "S1", Name: "actualfile", DisplayName: "Test Display Name", Size: 2048,
+		},
+		"SecretID": "S1",
+	})
+	body := rec.Body.String()
+	if !strings.Contains(body, "Test Display Name") {
+		t.Error("display name missing from item")
+	}
+	if !strings.Contains(body, "actualfile") {
+		t.Error("filename missing from item")
+	}
+	if !strings.Contains(body, `hx-get="/attachments/A1/edit-inline"`) {
+		t.Error("edit inline trigger button missing")
+	}
+}
+
 func TestSecretDetailEmptyAttachments(t *testing.T) {
 	rd := newTestRenderer(t)
 	rec := httptest.NewRecorder()

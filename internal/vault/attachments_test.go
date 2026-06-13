@@ -25,7 +25,7 @@ func TestAttachmentRoundTrip(t *testing.T) {
 	sid := seedSecret(t, v, dek)
 
 	payload := []byte("\x00\x01binary\xffcontent\n")
-	id, err := v.AddAttachment(dek, sid, "report.pdf", payload)
+	id, err := v.AddAttachment(dek, sid, "report.pdf", "PDF Report", payload)
 	if err != nil {
 		t.Fatalf("add: %v", err)
 	}
@@ -35,7 +35,7 @@ func TestAttachmentRoundTrip(t *testing.T) {
 	if err != nil || len(metas) != 1 {
 		t.Fatalf("list: %v len=%d", err, len(metas))
 	}
-	if metas[0].Name != "report.pdf" || metas[0].Size != int64(len(payload)) {
+	if metas[0].Name != "report.pdf" || metas[0].DisplayName != "PDF Report" || metas[0].Size != int64(len(payload)) {
 		t.Fatalf("bad meta: %+v", metas[0])
 	}
 
@@ -61,8 +61,8 @@ func TestAttachmentDataIsAADBound(t *testing.T) {
 	dek, _ := v.Setup([]byte("passphrase-123"))
 	sid := seedSecret(t, v, dek)
 
-	id1, _ := v.AddAttachment(dek, sid, "a.txt", []byte("alpha"))
-	id2, _ := v.AddAttachment(dek, sid, "b.txt", []byte("bravo"))
+	id1, _ := v.AddAttachment(dek, sid, "a.txt", "", []byte("alpha"))
+	id2, _ := v.AddAttachment(dek, sid, "b.txt", "", []byte("bravo"))
 
 	// Swap the two ciphertext payloads directly in the table.
 	var b1, b2 []byte
@@ -87,7 +87,7 @@ func TestRekeyReencryptsAttachments(t *testing.T) {
 	dek, _ := v.Setup(pass)
 	sid := seedSecret(t, v, dek)
 	payload := []byte("attachment-bytes")
-	id, _ := v.AddAttachment(dek, sid, "f.bin", payload)
+	id, _ := v.AddAttachment(dek, sid, "f.bin", "Rotated Display Name", payload)
 
 	newDEK, err := v.Rekey(pass)
 	if err != nil {
@@ -102,18 +102,63 @@ func TestRekeyReencryptsAttachments(t *testing.T) {
 	if err != nil || !bytes.Equal(got.Data, payload) || got.Name != "f.bin" {
 		t.Fatalf("new DEK attachment mismatch: err=%v name=%q", err, got.Name)
 	}
+	metas, err := v.Attachments(newDEK, sid)
+	if err != nil || len(metas) != 1 {
+		t.Fatalf("attachments list: %v", err)
+	}
+	if metas[0].DisplayName != "Rotated Display Name" {
+		t.Fatalf("display name not re-encrypted correctly: %q", metas[0].DisplayName)
+	}
 }
 
 func TestDeleteSecretCascadesAttachments(t *testing.T) {
 	v, _ := newTestVault(t)
 	dek, _ := v.Setup([]byte("passphrase-123"))
 	sid := seedSecret(t, v, dek)
-	v.AddAttachment(dek, sid, "x", []byte("y"))
+	v.AddAttachment(dek, sid, "x", "", []byte("y"))
 
 	if err := v.DeleteSecret(sid); err != nil {
 		t.Fatal(err)
 	}
 	if n, _ := v.CountAttachments(sid); n != 0 {
 		t.Fatalf("attachments should cascade-delete with the secret, got %d", n)
+	}
+}
+
+func TestUpdateAttachmentDisplayName(t *testing.T) {
+	v, _ := newTestVault(t)
+	dek, _ := v.Setup([]byte("passphrase-123"))
+	sid := seedSecret(t, v, dek)
+
+	id, err := v.AddAttachment(dek, sid, "x.txt", "", []byte("content"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Initial check: DisplayName should be empty
+	meta, err := v.AttachmentMeta(dek, id)
+	if err != nil || meta.DisplayName != "" {
+		t.Fatalf("expected empty display name, got error=%v meta=%+v", err, meta)
+	}
+
+	// Update the display name
+	if err := v.UpdateAttachmentDisplayName(dek, id, "Friendly Name"); err != nil {
+		t.Fatal(err)
+	}
+
+	// Check updated value
+	meta, err = v.AttachmentMeta(dek, id)
+	if err != nil || meta.DisplayName != "Friendly Name" {
+		t.Fatalf("expected Friendly Name, got error=%v meta=%+v", err, meta)
+	}
+
+	// Clear display name (set to empty)
+	if err := v.UpdateAttachmentDisplayName(dek, id, ""); err != nil {
+		t.Fatal(err)
+	}
+
+	meta, err = v.AttachmentMeta(dek, id)
+	if err != nil || meta.DisplayName != "" {
+		t.Fatalf("expected empty display name, got error=%v meta=%+v", err, meta)
 	}
 }

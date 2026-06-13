@@ -66,6 +66,9 @@
   hx-encoding="multipart/form-data">
   <h2>Attach a file</h2>
   <p class="hint">The file name and contents are encrypted under your master key, just like every other field. Max {{.MaxMB}} MB per file.</p>
+  <label>Display Name (optional)
+    <input name="display_name" placeholder="Friendly display name" autocomplete="off" autofocus>
+  </label>
   <label>File
     <input type="file" name="file" required>
   </label>

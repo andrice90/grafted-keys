@@ -212,6 +212,9 @@ var migrations = []string{
 		created_at INTEGER NOT NULL
 	);
 	CREATE INDEX idx_attach_secret ON attachments(secret_id);`,
+
+	// Add display name support for attachments.
+	`ALTER TABLE attachments ADD COLUMN display_name_enc BLOB;`,
 }
 
 func (db *DB) migrate() error {

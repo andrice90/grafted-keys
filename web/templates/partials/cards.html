@@ -110,20 +110,44 @@
 {{if .Items}}
 <ul class="attach-list">
   {{range .Items}}
-  <li class="attach-item" id="attach-item-{{.ID}}">
-    <a class="attach-link" href="/attachments/{{.ID}}/download" download>
-      <span class="attach-ico">{{template "icon" "download"}}</span>
-      <span class="attach-name">{{breakable .Name}}</span>
-      <span class="attach-size">{{humansize .Size}}</span>
-    </a>
-    <button class="icon-btn danger" type="button" hx-delete="/attachments/{{.ID}}" hx-target="#attach-{{$.SecretID}}" hx-swap="innerHTML"
-      hx-confirm="Delete attachment “{{.Name}}”? This cannot be undone." aria-label="Delete attachment">{{template "icon" "trash-2"}}</button>
-  </li>
+  {{template "attachItem" (dict "Item" . "SecretID" $.SecretID)}}
   {{end}}
 </ul>
 {{else}}
 <p class="attach-none hint">No files attached.</p>
 {{end}}
+{{end}}
+
+{{define "attachItem"}}
+<li class="attach-item" id="attach-item-{{.Item.ID}}">
+  <a class="attach-link" href="/attachments/{{.Item.ID}}/download" download>
+    <span class="attach-ico">{{template "icon" "download"}}</span>
+    <span class="attach-name-wrapper">
+      {{if .Item.DisplayName}}
+        <span class="attach-name">{{breakable .Item.DisplayName}}</span>
+        <span class="attach-subname">{{breakable .Item.Name}}</span>
+      {{else}}
+        <span class="attach-name">{{breakable .Item.Name}}</span>
+      {{end}}
+    </span>
+    <span class="attach-size">{{humansize .Item.Size}}</span>
+  </a>
+  <div class="attach-tools">
+    <button class="icon-btn" type="button" hx-get="/attachments/{{.Item.ID}}/edit-inline" hx-target="#attach-item-{{.Item.ID}}" hx-swap="outerHTML" aria-label="Edit display name">{{template "icon" "pencil"}}</button>
+    <button class="icon-btn danger" type="button" hx-delete="/attachments/{{.Item.ID}}" hx-target="#attach-{{.SecretID}}" hx-swap="innerHTML"
+      hx-confirm="Delete attachment “{{if .Item.DisplayName}}{{.Item.DisplayName}}{{else}}{{.Item.Name}}{{end}}”? This cannot be undone." aria-label="Delete attachment">{{template "icon" "trash-2"}}</button>
+  </div>
+</li>
+{{end}}
+
+{{define "attachEditForm"}}
+<li class="attach-item" id="attach-item-{{.ID}}">
+  <form class="attach-edit-form" hx-post="/attachments/{{.ID}}/edit-inline" hx-target="#attach-item-{{.ID}}" hx-swap="outerHTML">
+    <input class="attach-edit-input" name="display_name" value="{{.DisplayName}}" placeholder="Friendly display name" autocomplete="off" autofocus>
+    <button class="icon-btn success" type="submit" aria-label="Save">{{template "icon" "check"}}</button>
+    <button class="icon-btn" type="button" hx-get="/attachments/{{.ID}}/row" hx-target="#attach-item-{{.ID}}" hx-swap="outerHTML" aria-label="Cancel">{{template "icon" "x"}}</button>
+  </form>
+</li>
 {{end}}
 
 {{define "secretValue"}}

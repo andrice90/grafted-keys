@@ -142,6 +142,9 @@ func (s *Server) routes() {
 	mux.HandleFunc("POST /secrets/{id}/attachments", s.needDEK(s.uploadAttachment))
 	mux.HandleFunc("GET /attachments/{id}/download", s.needDEK(s.downloadAttachment))
 	mux.HandleFunc("DELETE /attachments/{id}", s.needDEK(s.deleteAttachment))
+	mux.HandleFunc("GET /attachments/{id}/edit-inline", s.needDEK(s.attachEditInlineForm))
+	mux.HandleFunc("POST /attachments/{id}/edit-inline", s.needDEK(s.updateAttachmentInline))
+	mux.HandleFunc("GET /attachments/{id}/row", s.needDEK(s.renderAttachmentRow))
 
 	// Settings (gated).
 	mux.HandleFunc("GET /settings", s.needDEK(s.settings))

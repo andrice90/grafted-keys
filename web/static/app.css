@@ -108,6 +108,7 @@ a { color: var(--accent-text); text-decoration: none; }
 }
 .icon-btn:hover { background: var(--surface-2); }
 .icon-btn.danger { color: var(--danger); }
+.icon-btn.success { color: var(--ok); }
 
 /* ---------- layout ---------- */
 .container { max-width: var(--maxw); margin: 0 auto; padding: 1rem 1rem 5.5rem; }
@@ -355,13 +356,26 @@ dialog::backdrop { background: rgba(8, 12, 20, 0.5); }
 .btn.tiny .icon { width: 14px; height: 14px; }
 .detail-label-row { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
 .attach-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .25rem; }
-.attach-item { display: flex; align-items: center; gap: .25rem; }
-.attach-link { display: flex; align-items: center; gap: .5rem; flex: 1; min-width: 0; padding: .4rem .55rem; color: var(--text);
-  border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); }
-.attach-link:hover { background: var(--surface-2); border-color: var(--muted); }
+.attach-item {
+  display: flex; align-items: center; gap: .15rem;
+  border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface);
+  overflow: hidden;
+}
+.attach-tools {
+  display: flex; gap: .15rem; justify-content: flex-end; flex: none;
+}
+.attach-tools .icon-btn { width: 30px; height: 30px; flex: none; }
+.attach-link { display: flex; align-items: center; gap: .5rem; flex: 1; min-width: 0; padding: .4rem .55rem; color: var(--text); }
+.attach-link:hover { background: var(--surface-2); }
 .attach-ico { display: inline-flex; color: var(--accent-text); flex: none; }
-.attach-name { font-size: .85rem; overflow-wrap: anywhere; flex: 1; min-width: 0; }
+.attach-name-wrapper { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.attach-name { font-size: .85rem; overflow-wrap: anywhere; }
+.attach-subname { font-size: .72rem; color: var(--muted); overflow-wrap: anywhere; margin-top: 1px; }
 .attach-size { color: var(--muted); font-size: .75rem; flex: none; white-space: nowrap; }
+.attach-edit-form { display: flex; align-items: center; gap: .15rem; flex: 1; min-width: 0; padding: .3rem .25rem .3rem .55rem; }
+.attach-edit-input { flex: 1; min-width: 0; height: 28px; padding: 0 .4rem; font-size: .85rem;
+  border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text); }
+.attach-edit-input:focus { outline: none; border-color: var(--accent); }
 .attach-none { margin: 0; }
 
 /* ---------- markdown ---------- */

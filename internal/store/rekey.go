@@ -12,7 +12,7 @@ var encryptedColumns = []struct {
 	{"environments", []string{"name_enc"}},
 	{"folders", []string{"name_enc"}},
 	{"secrets", []string{"name_enc", "value_enc", "notes_enc"}},
-	{"attachments", []string{"name_enc", "data_enc"}},
+	{"attachments", []string{"name_enc", "display_name_enc", "data_enc"}},
 }
 
 // RekeyTx re-encrypts every field and writes the new wrapped DEK in a single
@@ -47,7 +47,9 @@ func (db *DB) RekeyTx(transform func(table, column, id string, blob []byte) ([]b
 					rows.Close()
 					return err
 				}
-				recs = append(recs, rec{t.table, col, id, b})
+				if len(b) > 0 {
+					recs = append(recs, rec{t.table, col, id, b})
+				}
 			}
 			err = rows.Err()
 			rows.Close()

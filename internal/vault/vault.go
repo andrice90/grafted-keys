@@ -162,7 +162,7 @@ var tableEntity = map[string]string{
 }
 var columnField = map[string]string{
 	"name_enc": "name", "value_enc": "value", "notes_enc": "notes", "totp_enc": "totp",
-	"data_enc": "data",
+	"data_enc": "data", "display_name_enc": "display_name",
 }
 
 // Rekey rotates the data key: it re-encrypts every field under a new DEK and
